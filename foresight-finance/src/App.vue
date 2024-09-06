@@ -3,6 +3,8 @@
     <router-link id="FFLogo" to="/">Foresight Finance </router-link>
     <router-link to="/">Home</router-link>
     <router-link to="/about">About</router-link>
+    <router-link to="/AIPR">AI Pattern Recognizer</router-link>
+    <router-link to="/GSlearning">Gold Standard Learning</router-link>
   </nav>
   <router-view/>
 </template>

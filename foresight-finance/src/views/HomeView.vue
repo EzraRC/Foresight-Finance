@@ -1,4 +1,5 @@
 <template>
+  <!--IMPORTANT HAVE A SPINNER OR SOME SORT OF GOOD LOAD PAGE BEFORE DISPLAYING-->
   <div class="zoom-background">
     <h2 id="FFLogoHeader">Foresight Finance</h2>
 
