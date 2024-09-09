@@ -1,19 +1,14 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import AboutView from '../views/AboutView.vue'
 import GoldStandardLearningView from '../views/GoldStandardLearningView.vue'
 import AIPatternRecognizerView from '../views/AIPatternRecognizerView.vue'
+import LogInSignUpView from '@/views/LogInSignUpView.vue'
 
 const routes = [
   {
     path: '/',
     name: 'home',
     component: HomeView
-  },
-  {
-    path: '/about',
-    name: 'about',
-    component: AboutView
   },
   {
     path: '/GSLearning',
@@ -24,6 +19,11 @@ const routes = [
     path: '/AIPR',
     name: 'AIPR',
     component: AIPatternRecognizerView
+  },
+  {
+    path: '/LoginSignUp',
+    name: 'LogInSignUp',
+    component: LogInSignUpView
   }
 ]
 

@@ -1,20 +1,20 @@
 <template>
-  <div class="marble-background">
-
-  </div>
-</template>
-
-<script>
-
-export default {
-  name: 'GoldStandardLearningView',
-  components: {
-
+    <div class="marble-background">
+      
+    </div>
+  </template>
+  
+  <script>
+  
+  export default {
+    name: 'LogInSignUpView',
+    components: {
+  
+    }
   }
-}
-</script>
-
-<style>
+  </script>
+  
+  <style>
 body {
  height: 100vh;
 }
@@ -33,4 +33,5 @@ body {
   align-items: center;
   background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
 }
-</style>
+  </style>
+  
