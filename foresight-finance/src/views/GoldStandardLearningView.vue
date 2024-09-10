@@ -15,9 +15,7 @@ export default {
 </script>
 
 <style>
-body {
- height: 100vh;
-}
+
 .marble-background{
   position: fixed;
   margin-top: 9.5vh;
