@@ -1,7 +1,12 @@
 <template>
   <!-- IMPORTANT: Have a spinner or some sort of loading screen -->
   <div v-if="!loading" class="zoom-background" :style="{ backgroundImage: `url(${currentImage})` }">
-    <h2 id="FFLogoHeader">Foresight Finance</h2>
+    <div class="container1">
+      <h2 id="FFLogoHeader">Foresight Finance</h2>
+      <h1>An advanced way to get ahead of the ever-changing markets</h1>
+    </div>
+    
+
   </div>
 
   <div v-else class="spinner">
@@ -67,8 +72,6 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   display: flex;
-  justify-content: center;
-  align-items: center;
   transition: background-image 1.5s;
 }
 

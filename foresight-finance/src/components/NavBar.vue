@@ -36,8 +36,7 @@ export default {
         const toggleBtn = document.querySelector('.toggle_btn')
         const toggleBtnIcon = document.querySelector('.toggle_btn i')
         const dropDownMenu = document.querySelector('.dropdown_menu')
-        console.log(toggleBtn)
-
+        
         toggleBtn.addEventListener('click', () => {
             dropDownMenu.classList.toggle('open')
             const isOpen = dropDownMenu.classList.contains('open')
@@ -202,7 +201,14 @@ li {
     align-items: center;
     justify-content: center;
 }
-
+.dropdown_menu li a{
+    color: #fff;
+    text-decoration: none;
+}
+.dropdown_menu li a:hover{
+    color: #e3b130;
+    text-decoration: none;
+}
 .dropdown_menu .login_btn {
     width: 100%;
     justify-content: center;
