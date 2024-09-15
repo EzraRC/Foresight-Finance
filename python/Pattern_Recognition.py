@@ -2,6 +2,7 @@ import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
 import Stock_Patterns as sp
+import threading
 
 # Download historical stock data
 ticker = 'AAPL'  #Uses Apple Stock
