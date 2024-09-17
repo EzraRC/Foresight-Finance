@@ -1,35 +1,36 @@
 <template>
-    <div class="marble-background">
-      
-    </div>
-  </template>
-  
-  <script>
-  
-  export default {
-    name: 'AIPatternRecognizerView',
-    components: {
-  
+  <div>
+    <h1>Candlestick Chart</h1>
+    <img :src="chartUrl" alt="Candlestick Chart" />
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'AIPatternRecognizerView',
+  data() {
+    return {
+      chartUrl: this.getChartUrl(),  // Initialize with the current timestamp
+    };
+  },
+  mounted() {
+    // Automatically refresh the chart every 5 seconds
+    setInterval(() => {
+      this.chartUrl = this.getChartUrl();  // Update the image URL to force a refresh
+    }, 5000);  // Refresh every 5000ms (5 seconds)
+  },
+  methods: {
+    getChartUrl() {
+      // Add a timestamp to prevent browser caching
+      return `http://localhost:5000/chart?timestamp=${new Date().getTime()}`;
     }
   }
-  </script>
-  
-  <style>
+};
+</script>
 
-.marble-background{
-  position: fixed;
-  margin-top: 9.5vh;
-  top: 0;
-  left: 0;
+<style scoped>
+img {
   width: 100%;
-  height: 100vh;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
+  max-width: 800px;
 }
-  </style>
-  
+</style>

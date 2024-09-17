@@ -18,7 +18,7 @@
         </div>
 
         <div v-else>
-          <input v-model="username" type="text" placeholder="Username" />
+          <input v-model="email" type="text" placeholder="Email" />
           <input v-model="password" type="password" placeholder="Password" />
           <button @click="login">Login</button>
           <p @click="switchMode">Don't have an account? Click here</p>
@@ -63,50 +63,51 @@ export default {
     });
   },
   methods: {
-    // Switch between signup and login mode
-    switchMode() {
-      this.isSignUpMode = !this.isSignUpMode;
-      this.message = ''; // Reset the message when switching modes
-    },
-    // Signup function
-    signUp() {
-      if (!this.email || !this.password || !this.username) {
-        this.message = "Please fill in all fields.";
-        return;
-      }
-      createUserWithEmailAndPassword(auth, this.email, this.password)
-        .then((userCredential) => {
-          this.message = `Welcome ${this.email}!`;
-        })
-        .catch((error) => {
-          this.message = `Firebase: ${error.message}`;
-        });
-    },
-    // Login function
-    login() {
-      if (!this.password || !this.username) {
-        this.message = "Please fill in all fields.";
-        return;
-      }
-      signInWithEmailAndPassword(auth, this.email, this.password)
-        .then((userCredential) => {
-          this.message = `Welcome back ${this.email}!`;
-        })
-        .catch((error) => {
-          this.message = `Firebase: ${error.message}`;
-        });
-    },
-    // Logout function
-    logout() {
-      signOut(auth)
-        .then(() => {
-          this.message = "You have logged out.";
-        })
-        .catch((error) => {
-          this.message = `Firebase: ${error.message}`;
-        });
-    },
-    handleSubmit() {
+  // Switch between signup and login mode
+  switchMode() {
+    this.isSignUpMode = !this.isSignUpMode;
+    this.message = ''; // Reset the message when switching modes
+  },
+  // Signup function
+  signUp() {
+    if (!this.email || !this.password || !this.username) {
+      this.message = "Please fill in all fields.";
+      return;
+    }
+    createUserWithEmailAndPassword(auth, this.email, this.password)
+      .then((userCredential) => {
+        this.message = `Welcome ${this.email}!`;
+      })
+      .catch((error) => {
+        this.message = `Firebase: ${error.message}`;
+      });
+  },
+  // Login function
+  login() {
+    if (!this.email || !this.password) {
+      this.message = "Please fill in all fields.";
+      return;
+    }
+    // Log the user in with email and password
+    signInWithEmailAndPassword(auth, this.email, this.password)
+      .then((userCredential) => {
+        this.message = `Welcome back ${this.email}!`;
+      })
+      .catch((error) => {
+        this.message = `Firebase: ${error.message}`;
+      });
+  },
+  // Logout function
+  logout() {
+    signOut(auth)
+      .then(() => {
+        this.message = "You have logged out.";
+      })
+      .catch((error) => {
+        this.message = `Firebase: ${error.message}`;
+      });
+  },
+  handleSubmit() {
       // Prevent default form submission
     },
   },

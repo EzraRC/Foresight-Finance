@@ -1,57 +1,105 @@
 <template>
-    <!--Will edit to make more mobile friendly-->
     <nav class="navbar">
-        <div class="FFLogo">
-            <router-link to="/">Foresight Finance</router-link>
-        </div>
-        <ul class="links">
-            <li><router-link to="/">Home</router-link></li>
-            <li><router-link to="/AIPR">AI Pattern Recognizer</router-link></li>
-            <li><router-link to="/GSlearning">Gold Standard Learning</router-link></li>
-        </ul>
-        <router-link class="login_btn" to="/LoginSignUp">Login</router-link>
-        <div class="toggle_btn">
-            <i class="fa-solid fa-bars"></i>
-        </div>
-    </nav>
-    <div class="dropdown_menu">
+      <div class="FFLogo">
+        <router-link to="/">Foresight Finance</router-link>
+      </div>
+      <ul class="links">
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/AIPR">AI Pattern Recognizer</router-link></li>
         <li><router-link to="/GSlearning">Gold Standard Learning</router-link></li>
-        <li><router-link class="login_btn" to="/LoginSignUp">Login</router-link></li>
+      </ul>
+      <div v-if="isAuthenticated" class="greeting">
+        {{ greetingMessage }} {{ username }}
+      </div>
+      <router-link
+        class="login_btn"
+        :to="isAuthenticated ? '/' : '/LoginSignUp'"
+        @click="isAuthenticated ? logout() : null"
+      >
+        {{ isAuthenticated ? 'Logout' : 'Login' }}
+      </router-link>
+      <div class="toggle_btn">
+        <i class="fa-solid fa-bars"></i>
+      </div>
+    </nav>
+    <div class="dropdown_menu">
+      <li><router-link to="/">Home</router-link></li>
+      <li><router-link to="/AIPR">AI Pattern Recognizer</router-link></li>
+      <li><router-link to="/GSlearning">Gold Standard Learning</router-link></li>
+      <li>
+        <router-link
+          class="login_btn"
+          :to="isAuthenticated ? '/' : '/LoginSignUp'"
+          @click="isAuthenticated ? logout() : null"
+        >
+          {{ isAuthenticated ? 'Logout' : 'Login' }}
+        </router-link>
+      </li>
     </div>
-</template>
-
-<script>
-export default {
+  </template>
+  
+  <script>
+  // Import Firebase Auth to track user authentication state and handle signout
+  import { auth } from "../firebase.js";
+  import { onAuthStateChanged, signOut } from "firebase/auth";
+  
+  export default {
     data() {
-        return {
-            images: [],
-            currentImage: '',
-            loading: true
-        };
+      return {
+        isAuthenticated: false, // Tracks user authentication state
+        username: '', // Stores the logged-in user's display name
+        greetingMessage: '', // Stores the greeting message based on the time of day
+      };
+    },
+    methods: {
+      // Fetch the current time and set the greeting message
+      setGreeting() {
+        const hour = new Date().getHours();
+        if (hour < 12) {
+          this.greetingMessage = 'Good morning';
+        } else if (hour < 18) {
+          this.greetingMessage = 'Good afternoon';
+        } else {
+          this.greetingMessage = 'Good evening';
+        }
+      },
+      // Sign out the user and redirect to the login page
+      logout() {
+        signOut(auth)
+          .then(() => {
+            this.isAuthenticated = false;
+            this.$router.push('/LoginSignUp'); // Redirect to login page
+          })
+          .catch((error) => {
+            console.error('Error signing out:', error);
+          });
+      }
     },
     mounted() {
-
-        const toggleBtn = document.querySelector('.toggle_btn')
-        const toggleBtnIcon = document.querySelector('.toggle_btn i')
-        const dropDownMenu = document.querySelector('.dropdown_menu')
-
-        toggleBtn.addEventListener('click', () => {
-            dropDownMenu.classList.toggle('open')
-            const isOpen = dropDownMenu.classList.contains('open')
-            console.log(dropDownMenu.classList)
-            console.log(isOpen)
-            toggleBtnIcon.classList = isOpen
-                ? 'fa-solid fa-xmark'
-                : 'fa-solid fa-bars'
-        })
+      // Listen for authentication state changes
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          this.isAuthenticated = true;
+          this.username = user.displayName || user.email; // Use display name or fallback to email
+          this.setGreeting(); // Set greeting based on time of day
+        } else {
+          this.isAuthenticated = false;
+        }
+      });
+  
+      // Handle the toggle button for the dropdown menu
+      const toggleBtn = document.querySelector('.toggle_btn');
+      const toggleBtnIcon = document.querySelector('.toggle_btn i');
+      const dropDownMenu = document.querySelector('.dropdown_menu');
+  
+      toggleBtn.addEventListener('click', () => {
+        dropDownMenu.classList.toggle('open');
+        const isOpen = dropDownMenu.classList.contains('open');
+        toggleBtnIcon.classList = isOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+      });
     }
-}
-
-
-
-</script>
+  };
+  </script>
 
 <style>
 li {
@@ -254,4 +302,28 @@ li {
     }
 
 }
+
+/*Greeting message*/
+.greeting {
+    text-transform: uppercase;
+    text-align: center;
+    background: white;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s infinite ease-in-out;
+    background-size: 200%;
+    background-position: left;
+    margin-right: 1rem;
+}
+
+@keyframes shine {
+    from {
+        background-position: -10%;
+    }
+
+    to {
+        background-position: 110%;
+    }
+}
+
 </style>
