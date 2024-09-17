@@ -72,6 +72,7 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   display: flex;
+  justify-content: center;
   transition: background-image 1.5s;
 }
 
@@ -85,5 +86,10 @@ body {
 
 #FFLogoHeader {
   color: white;
+}
+
+.container1{
+  margin: 1rem;
+  padding: 1rem;
 }
 </style>
