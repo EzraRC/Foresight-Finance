@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>Candlestick Chart</h1>
-    <img :src="chartUrl" alt="Candlestick Chart" />
+    <iframe :src="chartUrl" width="100%" height="600px" frameborder="0"></iframe>
   </div>
 </template>
 
@@ -16,21 +16,23 @@ export default {
   mounted() {
     // Automatically refresh the chart every 5 seconds
     setInterval(() => {
-      this.chartUrl = this.getChartUrl();  // Update the image URL to force a refresh
-    }, 5000);  // Refresh every 5000ms (5 seconds)
+      this.chartUrl = this.getChartUrl();  // Update the iframe URL to force a refresh
+    }, 61000);  // Refresh every 61 seconds
   },
   methods: {
     getChartUrl() {
       // Add a timestamp to prevent browser caching
-      return `http://localhost:5000/chart?timestamp=${new Date().getTime()}`;
+      return `http://localhost:8080/candlestick_chart.html?timestamp=${new Date().getTime()}`;
     }
   }
 };
 </script>
 
 <style scoped>
-img {
+iframe {
+  margin-top: 100px;
   width: 100%;
-  max-width: 800px;
+  height: 600px;
+  border: none;
 }
 </style>

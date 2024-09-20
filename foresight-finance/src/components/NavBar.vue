@@ -123,6 +123,7 @@ li {
     padding-bottom: 2vh;
     height: 90px;
     gap: 10rem;
+    z-index: 999;
 }
 
 .navbar a {

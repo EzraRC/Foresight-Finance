@@ -1,12 +1,36 @@
 <template>
   <!-- IMPORTANT: Have a spinner or some sort of loading screen -->
-  <div v-if="!loading" class="zoom-background" :style="{ backgroundImage: `url(${currentImage})` }">
-    <div class="container1">
-      <h2 id="FFLogoHeader">Foresight Finance</h2>
-      <h1>An advanced way to get ahead of the ever-changing markets</h1>
-    </div>
-    
+  <div v-if="!loading">
+    <!-- Fixed background -->
+    <div class="zoom-background" :style="{ backgroundImage: `url(${currentImage})` }"></div>
 
+    <!-- Text that scrolls with the page -->
+    <div class="scrolling-content">
+      <!-- Foresight Finance Logo Container -->
+      <div class="logo-container">
+        <h2 id="FFLogoHeader">Foresight Finance</h2>
+      </div>
+
+      <!-- Motto Container -->
+      <div class="motto-container">
+        <h1>An advanced way to get ahead of the ever-changing markets</h1>
+      </div>
+
+      <!-- Transparent navy bubble for text -->
+      <div class="bubble-container">
+        <p class="bubble-text">Build and maximize your portfolio with AI-enhanced pattern recognition</p>
+      </div>
+
+      <!-- Candlestick chart SVG with background -->
+      <div class="svg-container">
+        <img src="@/assets/example_candlestick_chart.svg" alt="Candlestick Chart" class="candlestick-svg" />
+      </div>
+
+      <!-- Discover button -->
+      <div class="button-container">
+        <button class="discover-button" @click="navigateToAIPR">Discover patterns now!</button>
+      </div>
+    </div>
   </div>
 
   <div v-else class="spinner">
@@ -25,7 +49,7 @@ export default {
     };
   },
   mounted() {
-    this.loading = false
+    this.loading = false;
     // Load images dynamically
     this.images = [
       require('@/assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg'),
@@ -34,18 +58,22 @@ export default {
 
     // Set the initial background image
     this.currentImage = this.images[0];
+
     // Scroll event listener for background change
     window.addEventListener('scroll', () => {
-      {
-        const scrollPosition = window.scrollY;
-        const viewportHeight = window.innerHeight;
+      const scrollPosition = window.scrollY;
+      const viewportHeight = window.innerHeight;
 
-        if (scrollPosition < 1860) {
-          const imageIndex = Math.floor(scrollPosition / viewportHeight) % this.images.length;
-          this.currentImage = this.images[imageIndex];
-        }
+      if (scrollPosition < 1860) {
+        const imageIndex = Math.floor(scrollPosition / viewportHeight) % this.images.length;
+        this.currentImage = this.images[imageIndex];
       }
     });
+  },
+  methods: {
+    navigateToAIPR() {
+      this.$router.push('/AIPR');
+    }
   }
 }
 </script>
@@ -58,12 +86,13 @@ export default {
 }
 
 body {
-  height: 400vh;
+  height: 400vh; /* Ensure there's enough height for scrolling */
 }
 
+/* Fixed background style */
 .zoom-background {
   position: fixed;
-  margin-top: 9.5vh;
+  margin-top: 9.5vh; /* Leave space for the navbar */
   top: 0;
   left: 0;
   width: 100%;
@@ -71,11 +100,19 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  display: flex;
-  justify-content: center;
+  z-index: -1; /* Lowest z-index for the background */
   transition: background-image 1.5s;
 }
 
+/* Scrolling content (text) */
+.scrolling-content {
+  position: relative;
+  z-index: 10; /* Lower than navbar, higher than background */
+  padding-left: 2rem;
+  padding-top: 15vh;
+}
+
+/* Spinner style */
 .spinner {
   display: flex;
   justify-content: center;
@@ -84,12 +121,105 @@ body {
   color: white;
 }
 
-#FFLogoHeader {
-  color: white;
+/* Foresight Finance Logo styling */
+.logo-container {
+  margin-bottom: 2rem;
+  position: relative;
 }
 
-.container1{
-  margin: 1rem;
-  padding: 1rem;
+#FFLogoHeader {
+  color: white;
+  font-size: 3rem;
+  font-family: 'Trebuchet MS', sans-serif;
+  text-align: left;
+}
+
+/* Motto container styling */
+.motto-container {
+  position: relative;
+}
+
+.motto-container h1 {
+  color: white;
+  font-size: 8rem;
+  font-family: 'Trebuchet MS', sans-serif;
+  text-align: left;
+  max-width: 70vw;
+  line-height: 1.2;
+}
+
+/* Bubble container styling */
+.bubble-container {
+  background-color: rgba(32, 52, 68, 0.8); /* Transparent navy blue */
+  padding: 20px 40px;
+  border-radius: 15px;
+  max-width: 35vw;
+  text-align: center;
+  margin: auto;
+  margin-top: 480px;
+  margin-bottom: 55px;
+}
+
+.bubble-text {
+  color: white;
+  font-size: 2rem;
+  font-family: 'Trebuchet MS', sans-serif;
+}
+
+/* SVG container */
+.svg-container {
+  background-color: rgba(32, 52, 68, 0.8); /* Same transparent navy blue as the bubble */
+  padding: 10px;
+  border-radius: 15px;
+  max-width: 50vw;
+  margin: 10px auto; /* Add some margin to space the image */
+  text-align: center;
+}
+
+.candlestick-svg {
+  width: 100%;
+  height: auto;
+  display: inline-block;
+}
+
+/* Discover button styling */
+.button-container {
+  margin-top: 50px;
+  text-align: center;
+}
+
+.discover-button {
+  background-color: #f9c802;
+  color: black;
+  font-size: 1.5rem;
+  border: none;
+  border-radius: 25px;
+  padding: 15px 30px;
+  cursor: pointer;
+  font-family: 'Trebuchet MS', sans-serif;
+}
+
+.discover-button:hover {
+  background-color: #e1b702;
+}
+
+/* Add any customizations for smaller screens */
+@media (max-width: 768px) {
+  .motto-container h1 {
+    font-size: 3rem;
+  }
+
+  .bubble-text {
+    font-size: 1.5rem;
+  }
+
+  .candlestick-svg {
+    width: 90vw;
+  }
+
+  .discover-button {
+    font-size: 1.2rem;
+    padding: 10px 20px;
+  }
 }
 </style>

@@ -1,8 +1,8 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import GoldStandardLearningView from '../views/GoldStandardLearningView.vue'
-import AIPatternRecognizerView from '../views/AIPatternRecognizerView.vue'
-import LogInSignUpView from '@/views/LogInSignUpView.vue'
+import { createRouter, createWebHashHistory } from 'vue-router';
+import HomeView from '../views/HomeView.vue';
+import GoldStandardLearningView from '../views/GoldStandardLearningView.vue';
+import AIPatternRecognizerView from '../views/AIPatternRecognizerView.vue';
+import LogInSignUpView from '@/views/LogInSignUpView.vue';
 
 const routes = [
   {
@@ -25,11 +25,14 @@ const routes = [
     name: 'LogInSignUp',
     component: LogInSignUpView
   }
-]
+];
 
 const router = createRouter({
   history: createWebHashHistory(),
-  routes
-})
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    return { top: 0 }; // Always scroll to top
+  }
+});
 
-export default router
+export default router;
