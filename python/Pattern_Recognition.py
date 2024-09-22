@@ -2,80 +2,65 @@ import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
 import Stock_Patterns as sp
-import threading
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+import plotly.graph_objects as go
+
 
 # Download historical stock data
 ticker = 'AAPL' 
 data = yf.download(ticker, period='5d', interval='1m')
-data2 = yf.download('LMT', period='5d', interval='1m')
 
 # Visualize the data
-data['Close'].plot(figsize=(10, 6))
-plt.title(f"{ticker} Stock Price")
-plt.show()
+# Create a candlestick chart
+fig = go.Figure(data=[go.Candlestick(x=data.index,
+                                       open=data['Open'],
+                                       high=data['High'],
+                                       low=data['Low'],
+                                       close=data['Close'])])
 
-prices = data['Close']
-prices2 = data2['Close']
+# Add titles and labels
+fig.update_layout(title=f'{ticker} Candlestick Chart',
+                  xaxis_title='Time',
+                  yaxis_title='Price',
+                  xaxis_rangeslider_visible=False)
 
+# Show the chart
+fig.show()
+
+# Use High and Low prices for pattern detection
+prices = data[['High', 'Low']]
 
 lookbackPeriods = [30, 50, 70, 100]
 
-# Detect patterns across multiple lookback periods
-def detectPattern(prices, pattern_fn):
+
+def detectPattern(high_low_data, pattern_fn):
+    highs = high_low_data['High']
+    lows = high_low_data['Low']
+    
     for lookback in lookbackPeriods:
-        if pattern_fn(prices, lookback):
-            return True  # If the pattern is found in any lookback window, return True
+        if pattern_fn(highs, lows, lookback):  # Pass both highs and lows
+            return True
     return False
 
 def labelPatterns(data):
-    data['ascending_triangle'] = data['Close'].rolling(100).apply(lambda x: detectPattern(x,sp.ascendingTriangle))
-    data['descending_triangle'] = data['Close'].rolling(100).apply(lambda x: detectPattern(x,sp.descendingTriangle))
-    data['symmetrical_triangle'] = data['Close'].rolling(100).apply(lambda x: detectPattern(x,sp.symmetricalTriangle))
-    data['pennant'] = data['Close'].rolling(100).apply(lambda x: detectPattern(x,sp.pennant))
-    data['flag'] = data['Close'].rolling(100).apply(lambda x: detectPattern(x,sp.flag))
-    data['wedge'] = data['Close'].rolling(100).apply(lambda x: detectPattern(x,sp.wedge))
-    data['double_bottom'] = data['Close'].rolling(100).apply(lambda x: detectPattern(x,sp.doubleBottom))
-    data['double_top'] = data['Close'].rolling(100).apply(lambda x: detectPattern(x,sp.doubleTop))
-    data['head_and_shoulders'] = data['Close'].rolling(100).apply(lambda x: detectPattern(x,sp.headShoulders))
-    data['rounding_top'] = data['Close'].rolling(100).apply(lambda x:detectPattern(x,sp.roundingTop))
-    data['rounding_bottom'] = data['Close'].rolling(100).apply(lambda x: detectPattern(x,sp.roundingBottom))
-    data['cup_and_handle'] = data['Close'].rolling(100).apply(lambda x:detectPattern(x,sp.cupAndHandle))
+    data['ascending_triangle'] = prices['High'].rolling(100).apply(lambda x: detectPattern(pd.DataFrame({'High': x, 'Low': prices['Low'].iloc[x.index]}), sp.ascendingTriangle))
     return data
 
 data = labelPatterns(data)
-data2 = labelPatterns(data2)
 
-from sklearn.ensemble import RandomForestClassifier
-import numpy as np
-
+# Train model (if needed)
 def train_model(data):
     # Prepare the dataset with detected patterns
-    patterns = ['ascending_triangle', 'descending_triangle', 'symmetrical_triangle', 'pennant', 'flag', 'wedge',
-                'double_bottom', 'double_top', 'head_and_shoulders', 'rounding_top', 'rounding_bottom', 'cup_and_handle']
+    data = data.dropna(subset=['ascending_triangle'])
 
-    data = data.dropna(subset=patterns)
-
-    # Combine multiple pattern labels into a single target for multi-class classification
-    data['target'] = (data['ascending_triangle'] * 1 +
-                      data['descending_triangle'] * 2 +
-                      data['symmetrical_triangle'] * 3 +
-                      data['pennant'] * 4 +
-                      data['flag'] * 5 +
-                      data['wedge'] * 6 +
-                      data['double_bottom'] * 7 +
-                      data['double_top'] * 8 +
-                      data['head_and_shoulders'] * 9 +
-                      data['rounding_top'] * 10 +
-                      data['rounding_bottom'] * 11 +
-                      data['cup_and_handle'] * 12)
+    # Combine pattern labels into a single target for classification
+    data['target'] = data['ascending_triangle'].astype(int)
 
     # Remove rows where no pattern is detected (target is 0)
     data = data[data['target'] > 0]
 
-    X = data[patterns].fillna(0) 
-
+    X = data[['ascending_triangle']].fillna(0) 
     y = data['target']
 
     # Train-test split (80% training, 20% testing)
@@ -91,9 +76,8 @@ def train_model(data):
     accuracy = model.score(X_test, y_test)
     print(f"Model Accuracy: {accuracy * 100:.2f}%")
 
-
     return model
 
-
-model = train_model(data)
-
+# Optionally train the model (if there are enough detected patterns)
+if data['ascending_triangle'].sum() > 0:
+    model = train_model(data)

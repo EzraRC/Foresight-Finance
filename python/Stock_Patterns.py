@@ -1,12 +1,12 @@
 import numpy as np
 
 # Detect Ascending Triangle
-def ascendingTriangle(prices, lookback=20):
-    high = prices.rolling(window=lookback).max()
-    low = prices.rolling(window=lookback).min()
+def ascendingTriangle(highs, lows, lookback=20):
+    high_max = highs.rolling(window=lookback).max()
+    low_min = lows.rolling(window=lookback).min()
     
     # Check for flat high and increasing lows
-    if np.isclose(high[-1], high[-lookback]) and low[-1] > low[-lookback]:
+    if np.isclose(high_max[-1], high_max[-lookback]) and low_min[-1] > low_min[-lookback]:
         return True
     return False
 
