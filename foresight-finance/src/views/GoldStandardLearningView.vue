@@ -7,6 +7,20 @@
     </div>
     <div class="split right">
       <!-- Other content for the right side -->
+      <button class="accordion">Beginner Lessons</button>
+      <div class="panel">
+        <p>Lorem ipsum...</p>
+      </div>
+
+      <button class="accordion">Intermediate Lesson</button>
+      <div class="panel">
+        <p>Lorem ipsum...</p>
+      </div>
+
+      <button class="accordion">Expert Lessons</button>
+      <div class="panel">
+        <p>Lorem ipsum...</p>
+      </div>
     </div>
   </div>
 </template>
@@ -23,11 +37,11 @@ export default {
 </script>
 
 <style>
-body{
+body {
   height: 100vh;
 }
 
-.marble-background{
+.marble-background {
   position: fixed;
   margin-top: 9.5vh;
   top: 0;
@@ -38,8 +52,6 @@ body{
   background-position: center;
   background-repeat: no-repeat;
   display: flex;
-  justify-content: center;
-  align-items: center;
   background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
 }
 
@@ -52,6 +64,7 @@ body{
   top: 10;
   overflow-x: hidden;
   padding-top: 20px;
+  align-items: center;
 }
 
 /* Control the left side */
@@ -61,6 +74,8 @@ body{
 
 /* Control the right side */
 .right {
+  justify-content: center;
+  align-items: center;
   right: 0;
 }
 
@@ -77,5 +92,35 @@ body{
 .centered img {
   width: 150px;
   border-radius: 50%;
+}
+
+
+
+/*Accordian styles */
+/* Style the buttons that are used to open and close the accordion panel */
+.accordion {
+  background-color: #444;
+  color: #eee;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  outline: none;
+  transition: 0.4s;
+}
+
+/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+.active,
+.accordion:hover {
+  background-color: #555;
+}
+
+/* Style the accordion panel. Note: hidden by default */
+.panel {
+  padding: 0 18px;
+  background-color: darkslategrey;
+  display: none;
+  overflow: hidden;
 }
 </style>

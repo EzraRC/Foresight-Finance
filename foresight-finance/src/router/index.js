@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue';
 import GoldStandardLearningView from '../views/GoldStandardLearningView.vue';
 import AIPatternRecognizerView from '../views/AIPatternRecognizerView.vue';
 import LogInSignUpView from '@/views/LogInSignUpView.vue';
+import LearningView from '@/views/LearningView.vue';
 
 const routes = [
   {
@@ -24,6 +25,12 @@ const routes = [
     path: '/LoginSignUp',
     name: 'LogInSignUp',
     component: LogInSignUpView
+  }, 
+  {
+    path: '/Learning/:lessonID',
+    name: 'LearningView',
+    component: LearningView,
+    props: true
   }
 ];
 
