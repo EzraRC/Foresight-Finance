@@ -16,7 +16,7 @@
     </div>
 
     <!-- Show "Not Authorized" page if user is not logged in -->
-    <div v-else>
+    <div v-else class="not-auth">
         <h1>Not Authorized</h1>
         <p>Please log in to access this page.</p>
     </div>
@@ -166,6 +166,26 @@ h1 {
 }
 
 .loading-screen p {
+    font-size: 18px;
+}
+
+/* Loading Screen Styles */
+.not-auth {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.not-auth h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+.not-auth p {
     font-size: 18px;
 }
 </style>
