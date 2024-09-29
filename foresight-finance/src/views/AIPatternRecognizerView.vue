@@ -1,11 +1,29 @@
 <template>
   <div :style="containerStyle">
     <h1 style="color: white;">Candlestick Chart</h1>
+    
+    <!-- Iframe displaying the candlestick chart -->
     <iframe :src="chartUrl" width="100%" height="600px" frameborder="0"></iframe>
-    <div class="stock-info">
-      <p>Stock Name: <span>{{ stockName }}</span></p>
-      <p>Volume: <span>{{ volume }}</span></p>
-      <p>Average Volume: <span>{{ averageVolume }}</span></p>
+
+    <!-- Container for search bar and stock info -->
+    <div class="search-info-container">
+      <!-- Search bar to input ticker symbol -->
+      <div class="search-bar">
+        <input 
+          type="text" 
+          v-model="ticker" 
+          @keyup.enter="updateChart"
+          placeholder="Enter stock ticker"
+        />
+        <button @click="updateChart">Search</button>
+      </div>
+
+      <!-- Stock information -->
+      <div class="stock-info">
+        <p>Stock Name: <span>{{ stockName }}</span></p>
+        <p>Volume: <span>{{ volume }}</span></p>
+        <p>Average Volume: <span>{{ averageVolume }}</span></p>
+      </div>
     </div>
   </div>
 </template>
@@ -15,22 +33,32 @@ export default {
   name: 'AIPatternRecognizerView',
   data() {
     return {
-      chartUrl: this.getChartUrl(),  // Initialize with the current timestamp
-      stockName: 'NVIDIA',           // Replace with dynamic data as needed
-      volume: '12,345,678',          // Replace with dynamic data as needed
-      averageVolume: '1,234,567',   // Replace with dynamic data as needed
+      ticker: 'NVDA',  // Default stock ticker
+      chartUrl: this.getChartUrl('NVDA'), // Initialize with default ticker
+      stockName: 'loading ...',  // Replace with dynamic data as needed
+      volume: 'cannot obtain...',  // Replace with dynamic data as needed
+      averageVolume: 'cannot calculate...', // Replace with dynamic data as needed
     };
   },
-  mounted() {
-    // Automatically refresh the chart every 61 seconds
-    setInterval(() => {
-      this.chartUrl = this.getChartUrl();  // Update the iframe URL to force a refresh
-    }, 61000);
-  },
   methods: {
-    getChartUrl() {
-      // Add a timestamp to prevent browser caching
-      return `http://localhost:8080/candlestick_chart.html?timestamp=${new Date().getTime()}`;
+    getChartUrl(ticker) {
+      return `http://localhost:8080/candlestick_chart.html?ticker=${ticker}&timestamp=${new Date().getTime()}`;
+    },
+    async updateChart() {
+      // Make an API call to regenerate the chart with the new ticker
+      try {
+        const response = await fetch(`http://localhost:5000/generate_chart?ticker=${this.ticker}`);
+        const data = await response.json();
+        if (data.success) {
+          // If the chart generation is successful, update the iframe URL
+          this.chartUrl = this.getChartUrl(this.ticker);
+          this.stockName = data.stockName;
+          this.volume = data.volume;
+          this.averageVolume = data.averageVolume;
+        }
+      } catch (error) {
+        console.error('Error fetching chart data:', error);
+      }
     }
   },
   computed: {
@@ -46,7 +74,6 @@ export default {
 </script>
 
 <style scoped>
-
 iframe {
   margin-top: 20px;
   width: 100%;
@@ -54,15 +81,42 @@ iframe {
   border: none;
 }
 
-.stock-info {
+/* Container for search bar and stock info */
+.search-info-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 20px;
+}
+
+/* Styling for the search bar */
+.search-bar {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.search-bar input {
+  padding: 10px;
+  font-size: 16px;
+  width: 200px;
+  margin-right: 10px;
+}
+
+.search-bar button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Styling for the stock information */
+.stock-info {
+  flex: 1;
   color: white;
   font-size: 18px;
 }
 
 .stock-info p {
   margin: 5px 0;
-  color: white;
 }
 
 .stock-info span {

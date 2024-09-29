@@ -27,21 +27,21 @@
       </div>
 
       <!-- Discover button -->
-      <div class="button-container">
+      <div class="button-container" style="margin-bottom: -200px;">
         <button class="discover-button" @click="navigateToAIPR">Discover patterns now!</button>
       </div>
 
       <!-- Educational Page promotion bubbles-->
-      <div class="new-bubble-container">
+      <div class="new-bubble-container" style="margin-left: 900px; text-align: right;">
         <p class="new-bubble-text">We offer a variety of different lessons ranging from beginner topics, all the way to advanced technical patterns!</p>
       </div>
 
-      <div class="new-bubble-container">
+      <div class="new-bubble-container" style="margin-bottom: 50px; margin-left: 900px; text-align: right;">
         <p class="new-bubble-text">Want to learn more about financial markets, investment terms, and overall financial literacy?</p>
       </div>
 
       <!-- Learn with us button -->
-      <div class="bubble-container">
+      <div class="button-container" style="margin-bottom: 30px; margin-right: 160px; margin-left: 900px; text-align: right;">
         <button class="discover-button" @click="navigateToLearning">Learn with us!</button>
       </div>
     </div>
@@ -106,7 +106,7 @@ export default {
 }
 
 body {
-  height: 400vh; /* Ensure there's enough height for scrolling */
+  height: 350vh; /* Ensure there's enough height for scrolling */
 }
 
 /* Fixed background style */
@@ -176,7 +176,7 @@ body {
   max-width: 35vw;
   text-align: center;
   margin: auto;
-  margin-top: 480px;
+  margin-top: 100px;
   margin-bottom: 55px;
 }
 
@@ -204,8 +204,9 @@ body {
 
 /* Discover button styling */
 .button-container {
+  margin-bottom: 30px;
   margin-top: 50px;
-  text-align: center;
+  text-align: center
 }
 
 .discover-button {
