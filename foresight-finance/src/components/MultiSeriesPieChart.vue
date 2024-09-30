@@ -20,18 +20,18 @@ export default {
     data() {
         return {
             chartData: {
-                labels: ['Red', 'Blue', 'Yellow', 'Green'], // Data labels
+                labels: ['Red', 'Blue', 'Green'], // Data labels
                 datasets: [
                     {
                         label: 'Dataset 1',
-                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
-                        data: [300, 50, 100, 40], // First dataset values
+                        backgroundColor: ['#FF6384', '#36A2EB', '#4BC0C0'],
+                        data: [300, 50, 100], // First dataset values
                     },
                     {
                         //inner circle
                         label: 'Dataset 2',
-                        backgroundColor: ['rgba(255,255,255,0)', 'rgba(255,255,255,0)', 'rgba(255,255,255,0)', 'rgba(255,255,255,0)'],
-                        data: [0, 0, 0, 0], // Second dataset values
+                        backgroundColor: ['rgba(255,255,255,0)', 'rgba(255,255,255,0)', 'rgba(255,255,255,0)'],
+                        data: [0, 0, 0], // Second dataset values
                     },
                 ],
             },
