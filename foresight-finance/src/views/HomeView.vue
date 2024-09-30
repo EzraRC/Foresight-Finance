@@ -32,17 +32,22 @@
       </div>
 
       <!-- Educational Page promotion bubbles-->
-      <div class="new-bubble-container" style="margin-left: 900px; text-align: right;">
+      <div class="new-bubble-container" style="margin-left: 900px; text-align: right; display: flex; align-items: center;">
         <p class="new-bubble-text">We offer a variety of different lessons ranging from beginner topics, all the way to advanced technical patterns!</p>
       </div>
 
-      <div class="new-bubble-container" style="margin-bottom: 50px; margin-left: 900px; text-align: right;">
+      <div class="new-bubble-container" style="margin-bottom: 50px; margin-left: 900px; text-align: right; display: flex; align-items: center;">
         <p class="new-bubble-text">Want to learn more about financial markets, investment terms, and overall financial literacy?</p>
       </div>
 
       <!-- Learn with us button -->
       <div class="button-container" style="margin-bottom: 30px; margin-right: 160px; margin-left: 900px; text-align: right;">
         <button class="discover-button" @click="navigateToLearning">Learn with us!</button>
+      </div>
+
+      <!-- Gold bull GIF -->
+      <div class="gold-bull-gif">
+        <img src="@/assets/temporary-gold-bull.gif" alt="Gold Bull" class="gold-bull-gif" />
       </div>
     </div>
   </div>
@@ -90,7 +95,7 @@ export default {
       this.$router.push('/AIPR');
     },
 
-    //Learning page
+    // Learning page
     navigateToLearning() {
       this.$router.push('/GSlearning');
     }
@@ -206,7 +211,7 @@ body {
 .button-container {
   margin-bottom: 30px;
   margin-top: 50px;
-  text-align: center
+  text-align: center;
 }
 
 .discover-button {
@@ -250,6 +255,15 @@ body {
   color: black;
   font-size: 1.5rem; /* Smaller font size */
   font-family: 'Trebuchet MS', sans-serif;
+}
+
+/* Gold bull GIF styling */
+.gold-bull-gif {
+  width: 800px;  /* Adjust the size as needed */
+  height: auto; /* Maintain aspect ratio */
+  margin-right: 10px; /* Space between the GIF and text */
+  margin-top: -250px;
+  margin-bottom: 100px;
 }
 
 /* Add any customizations for smaller screens */
