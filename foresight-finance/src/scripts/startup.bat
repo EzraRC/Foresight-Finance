@@ -7,7 +7,4 @@ REM Start the HTTP server
 start python -m http.server 8080
 
 REM Start the candlestick update loop
-:loop
 python candlestick_graph.py
-timeout /t 60
-goto loop

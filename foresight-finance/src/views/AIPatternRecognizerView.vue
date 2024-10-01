@@ -1,9 +1,12 @@
 <template>
   <div :style="containerStyle">
-    <h1 style="color: white;">Candlestick Chart</h1>
-    
     <!-- Iframe displaying the candlestick chart -->
-    <iframe :src="chartUrl" width="100%" height="600px" frameborder="0"></iframe>
+    <iframe :src="chartUrl" frameborder="0" v-if="!loading"></iframe>
+    
+    <!-- Loading indicator -->
+    <div v-if="loading" class="loading-indicator">
+      Loading...
+    </div>
 
     <!-- Container for search bar and stock info -->
     <div class="search-info-container">
@@ -20,10 +23,15 @@
 
       <!-- Stock information -->
       <div class="stock-info">
-        <p>Stock Name: <span>{{ stockName }}</span></p>
-        <p>Volume: <span>{{ volume }}</span></p>
-        <p>Average Volume: <span>{{ averageVolume }}</span></p>
+        <p style="color: white;">Stock Name: <span>{{ stockName }}</span></p>
+        <p style="color: white;">Volume: <span>{{ volume }}</span></p>
+        <p style="color: white;">Average Volume: <span>{{ averageVolume }}</span></p>
       </div>
+    </div>
+
+    <!-- Countdown timer for refreshing the graph -->
+    <div class="refresh-timer" v-if="refreshing">
+      <p style="color: white;">Refreshing graph in: {{ countdown }}s</p>
     </div>
   </div>
 </template>
@@ -33,33 +41,89 @@ export default {
   name: 'AIPatternRecognizerView',
   data() {
     return {
-      ticker: 'NVDA',  // Default stock ticker
-      chartUrl: this.getChartUrl('NVDA'), // Initialize with default ticker
-      stockName: 'loading ...',  // Replace with dynamic data as needed
-      volume: 'cannot obtain...',  // Replace with dynamic data as needed
-      averageVolume: 'cannot calculate...', // Replace with dynamic data as needed
+      ticker: '',  // Default stock ticker
+      chartUrl: this.getChartUrl(''), // Initialize with default ticker
+      stockName: '...',  // Replace with dynamic data as needed
+      volume: '...',  // Replace with dynamic data as needed
+      averageVolume: '...', // Replace with dynamic data as needed
+      loading: false, // Loading state
+      refreshing: false, // Refreshing state
+      countdown: 60, // Countdown timer in seconds
+      refreshInterval: null, // Store the interval ID
+      countdownInterval: null, // Store the countdown interval ID
     };
   },
   methods: {
     getChartUrl(ticker) {
       return `http://localhost:8080/candlestick_chart.html?ticker=${ticker}&timestamp=${new Date().getTime()}`;
     },
-    async updateChart() {
-      // Make an API call to regenerate the chart with the new ticker
-      try {
-        const response = await fetch(`http://localhost:5000/generate_chart?ticker=${this.ticker}`);
-        const data = await response.json();
-        if (data.success) {
-          // If the chart generation is successful, update the iframe URL
-          this.chartUrl = this.getChartUrl(this.ticker);
-          this.stockName = data.stockName;
-          this.volume = data.volume;
-          this.averageVolume = data.averageVolume;
+    updateChart() {
+      this.loading = true; // Set loading to true while fetching data
+      console.log(`Fetching data for ticker: ${this.ticker}`); // Debug log
+      
+      // Delay the chart update by 2 seconds
+      setTimeout(async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/generate_chart?ticker=${this.ticker}`);
+          const data = await response.json();
+
+          console.log("Response data:", data); // Log the entire response data
+
+          if (data.success) {
+            this.chartUrl = this.getChartUrl(this.ticker); // Refresh the chart
+            this.stockName = data.stockName;
+            this.volume = data.volume;
+            this.averageVolume = data.averageVolume;
+
+            console.log(`Chart updated for ticker: ${this.ticker}`); // Debug log
+          } else {
+            console.error('Error with data response:', data.message); // Log error message
+            this.stockName = 'Error: Invalid ticker';
+            this.volume = 'Error: No volume found';
+            this.averageVolume = 'Error: Average could not be calculated';
+          }
+        } catch (error) {
+          console.error('Error fetching chart data:', error);
+          this.stockName = 'Error';
+          this.volume = 'Error';
+          this.averageVolume = 'Error';
+        } finally {
+          this.loading = false; // Set loading to false after fetching
         }
-      } catch (error) {
-        console.error('Error fetching chart data:', error);
+      }, 2000); // 2000 milliseconds delay
+    },
+    startAutoRefresh() {
+      this.refreshing = true; // Set refreshing state
+      this.refreshInterval = setInterval(() => {
+        this.updateChart(); // Call updateChart every 60 seconds
+      }, 60000); // 60 seconds in milliseconds
+
+      // Countdown timer setup
+      this.countdown = 60; // Reset countdown
+      this.countdownInterval = setInterval(() => {
+        this.countdown -= 1; // Decrease countdown
+        if (this.countdown <= 0) {
+          this.countdown = 60; // Reset countdown
+        }
+      }, 1000); // Update countdown every second
+    },
+    stopAutoRefresh() {
+      if (this.refreshInterval) {
+        clearInterval(this.refreshInterval);
+        this.refreshInterval = null;
       }
-    }
+      if (this.countdownInterval) {
+        clearInterval(this.countdownInterval);
+        this.countdownInterval = null;
+      }
+      this.refreshing = false; // Reset refreshing state
+    },
+  },
+  mounted() {
+    this.startAutoRefresh(); // Start auto-refresh when the component is mounted
+  },
+  beforeDestroy() {
+    this.stopAutoRefresh(); // Stop auto-refresh when the component is destroyed
   },
   computed: {
     containerStyle() {
@@ -67,6 +131,7 @@ export default {
         backgroundColor: 'rgba(32, 52, 68, 1.0)',
         padding: '20px',
         borderRadius: '10px',
+        position: 'relative', // Required for absolute positioning of the timer
       };
     }
   }
@@ -75,10 +140,13 @@ export default {
 
 <style scoped>
 iframe {
-  margin-top: 20px;
+  margin: 0; /* Remove any margin */
+  padding: 0; /* Remove any padding */
   width: 100%;
-  height: 600px;
+  height: 600px; /* Set height to maintain space */
   border: none;
+  position: relative; /* Ensure proper positioning */
+  margin-top: 70px;
 }
 
 /* Container for search bar and stock info */
@@ -121,5 +189,28 @@ iframe {
 
 .stock-info span {
   font-weight: bold;
+}
+
+/* Styling for the loading indicator */
+.loading-indicator {
+  color: white;
+  font-size: 40px; /* Increase font size for the loading text */
+  text-align: center;
+  height: 600px; /* Match height of the iframe */
+  display: flex; /* Center the text */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  margin-top: 70px; /* Ensure it's below the iframe */
+}
+
+/* Styling for the refresh timer */
+.refresh-timer {
+  position: absolute; /* Use absolute positioning */
+  bottom: 20px; /* Position from the bottom */
+  right: 20px; /* Position from the right */
+  background-color: rgba(0, 0, 0, 0.5); /* Optional: Add a semi-transparent background */
+  padding: 10px; /* Padding around the text */
+  color: white; /* Text color */
+  font-size: 15px; /* Font size */
 }
 </style>
