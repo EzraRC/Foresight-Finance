@@ -1,7 +1,7 @@
 import yfinance as yf
 import plotly.graph_objects as go
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from datetime import datetime
 
 app = Flask(__name__)
@@ -104,6 +104,14 @@ def generate_chart():
             "marketCap": 'N/A',
             "percentChange": 'N/A',
         })
+
+# Route to serve the stock_data.txt file
+@app.route('/static/stock_data.txt', methods=['GET'])
+def serve_stock_data():
+    try:
+        return send_from_directory('static', 'stock_data.txt')
+    except Exception as e:
+        return jsonify({"success": False, "message": "File not found."}), 404
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
