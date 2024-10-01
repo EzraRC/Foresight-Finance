@@ -1,83 +1,46 @@
-import yfinance as yf
+# import data tools
+import talib
 import pandas as pd
-import matplotlib.pyplot as plt
-import Stock_Patterns as sp
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+# import plotting tools
 import plotly.graph_objects as go
+import plotly.express as px
+import matplotlib.pyplot as plt
+# import finance data tools
+import yfinance as yf
 
 
-# Download historical stock data
-ticker = 'AAPL' 
-data = yf.download(ticker, period='5d', interval='1m')
+# download of stock data
+start, end ,ticker = '2019-01-01', '2024-07-05', "^GDAXI"
+prices = yf.download(tickers=ticker, start=start, end=end)
+     
+# showing all availble candle sticks
+candle_names = talib.get_function_groups()['Pattern Recognition']
+print(candle_names)
+print(len(candle_names))
 
-# Visualize the data
-# Create a candlestick chart
-fig = go.Figure(data=[go.Candlestick(x=data.index,
-                                       open=data['Open'],
-                                       high=data['High'],
-                                       low=data['Low'],
-                                       close=data['Close'])])
+# pattern detction
+harami = talib.CDLHARAMI(prices['Open'], prices['High'], prices['Low'], prices['Close'])
 
-# Add titles and labels
-fig.update_layout(title=f'{ticker} Candlestick Chart',
-                  xaxis_title='Time',
-                  yaxis_title='Price',
-                  xaxis_rangeslider_visible=False)
+# data preparation for plotting
+bull_harami_plot = np.where(harami>0, prices.Close,np.nan)
+bear_harami_plot = np.where(harami<0, prices.Close,np.nan)
 
-# Show the chart
+
+# PLotting of Data
+title = f'DAX between {start} and {end}'
+
+# plotting
+fig = go.Figure()
+fig.add_trace(go.Candlestick(x=prices.index, open=prices['Open'], high=prices['High'],
+                             low=prices['Low'], close=prices['Close']))
+fig.add_trace(go.Scatter(x=prices.index, y=bull_harami_plot, mode='markers',
+                         name='bull_harami', marker_symbol='triangle-up', marker_color='yellow', marker_size=15))
+fig.add_trace(go.Scatter(x=prices.index, y=bear_harami_plot, mode='markers',
+                         name='bear_harami', marker_symbol='triangle-down', marker_color='lightskyblue', marker_size=15))
+
+fig.update_layout(template='plotly_dark', autosize=False, width=1100, height=600)
+fig.update_layout(title=title, xaxis_title='date', yaxis_title='prices')
+fig.update_layout(xaxis_rangeslider_visible=False)
 fig.show()
-
-# Use High and Low prices for pattern detection
-prices = data[['High', 'Low']]
-
-lookbackPeriods = [30, 50, 70, 100]
-
-
-def detectPattern(high_low_data, pattern_fn):
-    highs = high_low_data['High']
-    lows = high_low_data['Low']
-    
-    for lookback in lookbackPeriods:
-        if pattern_fn(highs, lows, lookback):  # Pass both highs and lows
-            return True
-    return False
-
-def labelPatterns(data):
-    data['ascending_triangle'] = prices['High'].rolling(100).apply(lambda x: detectPattern(pd.DataFrame({'High': x, 'Low': prices['Low'].iloc[x.index]}), sp.ascendingTriangle))
-    return data
-
-data = labelPatterns(data)
-
-# Train model (if needed)
-def train_model(data):
-    # Prepare the dataset with detected patterns
-    data = data.dropna(subset=['ascending_triangle'])
-
-    # Combine pattern labels into a single target for classification
-    data['target'] = data['ascending_triangle'].astype(int)
-
-    # Remove rows where no pattern is detected (target is 0)
-    data = data[data['target'] > 0]
-
-    X = data[['ascending_triangle']].fillna(0) 
-    y = data['target']
-
-    # Train-test split (80% training, 20% testing)
-    split_index = int(0.8 * len(data))
-    X_train, X_test = X[:split_index], X[split_index:]
-    y_train, y_test = y[:split_index], y[split_index:]
-
-    # Train a Random Forest Classifier
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
-
-    # Evaluate the model
-    accuracy = model.score(X_test, y_test)
-    print(f"Model Accuracy: {accuracy * 100:.2f}%")
-
-    return model
-
-# Optionally train the model (if there are enough detected patterns)
-if data['ascending_triangle'].sum() > 0:
-    model = train_model(data)
+     
