@@ -23,9 +23,11 @@
 
       <!-- Stock information -->
       <div class="stock-info">
-        <p style="color: white;">Stock Name: <span>{{ stockName }}</span></p>
+        <p style="color: white;">Symbol: <span>{{ stockCode }}</span></p> <!-- Updated label -->
+        <p style="color: white;">Company Name: <span>{{ stockName }}</span></p> <!-- Updated label -->
+        <p style="color: white;">Market Cap: <span>{{ marketCap }}</span></p> <!-- Updated label -->
+        <p style="color: white;">% Change: <span>{{ percentChange }}</span></p> <!-- Updated label -->
         <p style="color: white;">Volume: <span>{{ volume }}</span></p>
-        <p style="color: white;">Average Volume: <span>{{ averageVolume }}</span></p>
       </div>
     </div>
 
@@ -44,8 +46,10 @@ export default {
       ticker: '',  // Default stock ticker
       chartUrl: this.getChartUrl(''), // Initialize with default ticker
       stockName: '...',  // Replace with dynamic data as needed
+      stockCode: '...',  // New data property for stock code
+      marketCap: '...',  // New data property for market cap
+      percentChange: '...',  // New data property for percent change
       volume: '...',  // Replace with dynamic data as needed
-      averageVolume: '...', // Replace with dynamic data as needed
       loading: false, // Loading state
       refreshing: false, // Refreshing state
       countdown: 60, // Countdown timer in seconds
@@ -72,21 +76,27 @@ export default {
           if (data.success) {
             this.chartUrl = this.getChartUrl(this.ticker); // Refresh the chart
             this.stockName = data.stockName;
+            this.stockCode = data.stockCode; // Update the stock code from the response
+            this.marketCap = data.marketCap; // Update the market cap from the response
+            this.percentChange = data.percentChange; // Update the percent change from the response
             this.volume = data.volume;
-            this.averageVolume = data.averageVolume;
 
             console.log(`Chart updated for ticker: ${this.ticker}`); // Debug log
           } else {
             console.error('Error with data response:', data.message); // Log error message
             this.stockName = 'Error: Invalid ticker';
+            this.stockCode = 'Error'; // Set stock code to error
+            this.marketCap = 'Error'; // Set market cap to error
+            this.percentChange = 'Error'; // Set percent change to error
             this.volume = 'Error: No volume found';
-            this.averageVolume = 'Error: Average could not be calculated';
           }
         } catch (error) {
           console.error('Error fetching chart data:', error);
           this.stockName = 'Error';
+          this.stockCode = 'Error'; // Set stock code to error
+          this.marketCap = 'Error'; // Set market cap to error
+          this.percentChange = 'Error'; // Set percent change to error
           this.volume = 'Error';
-          this.averageVolume = 'Error';
         } finally {
           this.loading = false; // Set loading to false after fetching
         }
@@ -147,6 +157,7 @@ iframe {
   border: none;
   position: relative; /* Ensure proper positioning */
   margin-top: 70px;
+  margin-bottom: -20PX;
 }
 
 /* Container for search bar and stock info */
@@ -201,6 +212,7 @@ iframe {
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
   margin-top: 70px; /* Ensure it's below the iframe */
+  margin-bottom: -20px
 }
 
 /* Styling for the refresh timer */

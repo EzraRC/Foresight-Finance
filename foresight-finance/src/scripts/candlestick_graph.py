@@ -68,15 +68,42 @@ def generate_chart():
         return jsonify({"success": False, "message": "Error creating chart."}), 500
 
     # Get additional stock information
-    volume = f"{data['Volume'].sum():,}"
-    average_volume = f"{data['Volume'].mean():,.0f}"
+    try:
+        info = yf.Ticker(ticker).info
+        volume = f"{data['Volume'].sum():,}"
+        
+        # Check if market_cap is available and is a number
+        market_cap = info.get('marketCap')
+        if market_cap is not None:
+            market_cap = f"{market_cap:,}"  # Format as string with commas
+        else:
+            market_cap = 'N/A'
+        
+        # Check if regularMarketChangePercent is available and is a number
+        percent_change = info.get('regularMarketChangePercent')
+        if percent_change is not None:
+            percent_change = f"{percent_change:.2f}%"  # Format as percentage
+        else:
+            percent_change = 'N/A'
 
-    return jsonify({
-        "success": True,
-        "stockName": ticker,
-        "volume": volume,
-        "averageVolume": average_volume
-    })
+        return jsonify({
+            "success": True,
+            "stockName": info.get('longName', ticker),  # Use longName if available
+            "stockCode": ticker,
+            "volume": volume,
+            "marketCap": market_cap,
+            "percentChange": percent_change,
+        })
+
+    except Exception as e:
+        print(f"Error fetching stock info: {e}")
+        return jsonify({
+            "success": True,
+            "stockName": ticker,
+            "volume": volume,
+            "marketCap": 'N/A',
+            "percentChange": 'N/A',
+        })
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
