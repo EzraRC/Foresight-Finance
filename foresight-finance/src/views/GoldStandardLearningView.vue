@@ -105,10 +105,45 @@ export default {
   display: flex;
   background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
 }
+/* Split the screen in half */
+.split {
+  height: 100%;
+  width: 50%;
+  position: fixed;
+  z-index: 1;
+  
+  overflow-x: hidden;
+  padding-top: 20px;
+}
+
+/* Control the left side */
+.left {
+  left: 0;
+}
+
+/* Control the right side */
+.right {
+  right: 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* If you want the content centered horizontally and vertically */
+.centered {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  
+}
+
 
 /* Accordion container */
 .accordion-container {
-  width: 100%;
+  
+  padding-top: 35vh;
+  width: 50%;
   max-width: 1000px;
   display: flex;
   flex-direction: column;
