@@ -124,6 +124,7 @@ li {
     height: 90px;
     gap: 10rem;
     z-index: 999;
+    border-bottom: 0.2rem solid #e3b130 ;
 }
 
 .navbar a {
@@ -238,7 +239,7 @@ li {
     border-radius: 10px;
     overflow: hidden;
     transition: height .2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 1;
+    z-index: 1000;
 }
 
 .dropdown_menu.open {

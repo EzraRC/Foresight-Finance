@@ -10,30 +10,54 @@
         <!-- Beginner Lessons Accordion -->
         <button class="accordion">Beginner Lessons</button>
         <div class="panel">
-          <div v-for="lesson in beginnerLessons" :key="lesson.id">
-            <p>Lesson {{ lesson.ID }}: 
-              <router-link :to="{ name: 'LearningView', params: { lessonID: lesson.ID }}">{{ lesson.title }}</router-link>
-            </p>
+          <div v-if="hasBeginnerLessons">
+            <div v-for="lesson in beginnerLessons" :key="lesson.id">
+              <p class="lesson-text">Lesson {{ lesson.ID }}:
+                <router-link :to="{ name: 'LearningView', params: { lessonID: lesson.ID } }">
+                  {{ lesson.title }}
+                </router-link>
+              </p>
+            </div>
+          </div>
+          <div v-else>
+            <p class="lesson-text">Oops, sorry! These lessons are either locked. Please complete the intermediate
+              lessons before moving on :)</p>
           </div>
         </div>
 
         <!-- Intermediate Lessons Accordion -->
         <button class="accordion">Intermediate Lessons</button>
         <div class="panel">
-          <div v-for="lesson in intermediateLessons" :key="lesson.id">
-            <p>Lesson {{ lesson.ID }}: 
-              <router-link :to="{ name: 'LearningView', params: { lessonID: lesson.ID }}">{{ lesson.title }}</router-link>
-            </p>
+          <div v-if="hasIntermediateLessons">
+            <div v-for="lesson in intermediateLessons" :key="lesson.id">
+              <p class="lesson-text">Lesson {{ lesson.ID }}:
+                <router-link :to="{ name: 'LearningView', params: { lessonID: lesson.ID } }">
+                  {{ lesson.title }}
+                </router-link>
+              </p>
+            </div>
+          </div>
+          <div v-else>
+            <p class="lesson-text">Oops, sorry! These lessons are either locked. Please complete the intermediate
+              lessons before moving on :)</p>
           </div>
         </div>
 
         <!-- Expert Lessons Accordion -->
         <button class="accordion">Expert Lessons</button>
         <div class="panel">
-          <div v-for="lesson in expertLessons" :key="lesson.id">
-            <p>Lesson {{ lesson.ID }}: 
-              <router-link :to="{ name: 'LearningView', params: { lessonID: lesson.ID }}">{{ lesson.title }}</router-link>
-            </p>
+          <div v-if="hasExpertLessons">
+            <div v-for="lesson in expertLessons" :key="lesson.id">
+              <p class="lesson-text">Lesson {{ lesson.ID }}:
+                <router-link :to="{ name: 'LearningView', params: { lessonID: lesson.ID } }">
+                  {{ lesson.title }}
+                </router-link>
+              </p>
+            </div>
+          </div>
+          <div v-else>
+            <p class="lesson-text">Oops, sorry! These lessons are either locked. Please complete the intermediate
+              lessons before moving on :)</p>
           </div>
         </div>
       </div>
@@ -50,6 +74,17 @@ export default {
   name: 'GoldStandardLearningView',
   components: {
     MultiSeriesPieChart,
+  },
+  computed: {
+    hasBeginnerLessons() {
+      return this.beginnerLessons.length > 0;
+    },
+    hasIntermediateLessons() {
+      return this.intermediateLessons.length > 0;
+    },
+    hasExpertLessons() {
+      return this.expertLessons.length > 0;
+    }
   },
   data() {
     return {
@@ -78,13 +113,20 @@ export default {
     }
 
     // Accordion functionality
-    var acc = document.getElementsByClassName("accordion");
+    // Accordion functionality with dynamic height adjustment
+    const acc = document.getElementsByClassName("accordion");
     for (let i = 0; i < acc.length; i++) {
       acc[i].addEventListener("click", function () {
         this.classList.toggle("active");
-        var panel = this.nextElementSibling;
-        panel.style.display = panel.style.display === "block" ? "none" : "block";
-        panel.style.maxHeight = panel.style.maxHeight ? null : panel.scrollHeight + "px";
+        const panel = this.nextElementSibling;
+
+        if (panel.style.maxHeight) {
+          // If the panel is already open, close it
+          panel.style.maxHeight = null;
+        } else {
+          // If the panel is closed, open it and set maxHeight dynamically
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        }
       });
     }
   }
@@ -105,13 +147,14 @@ export default {
   display: flex;
   background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
 }
+
 /* Split the screen in half */
 .split {
   height: 100%;
   width: 50%;
   position: fixed;
   z-index: 1;
-  
+
   overflow-x: hidden;
   padding-top: 20px;
 }
@@ -135,13 +178,13 @@ export default {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  
+
 }
 
 
 /* Accordion container */
 .accordion-container {
-  
+
   padding-top: 35vh;
   width: 50%;
   max-width: 1000px;
@@ -152,6 +195,7 @@ export default {
 }
 
 /* Accordion button styling */
+/* Accordion button styling */
 .accordion {
   background-color: #444;
   color: #eee;
@@ -161,21 +205,45 @@ export default {
   text-align: left;
   border: none;
   outline: none;
-  transition: background-color 0.4s ease;
+  transition: background-color 0.4s ease, color 0.4s ease;
   margin: 0;
   border-bottom: 1px solid #555;
   box-sizing: border-box;
   font-size: 1.2rem;
 }
 
+.accordion.active {
+  background-color: #666;
+  /* Change background color when active */
+  color: white;
+  /* Change text color when active */
+}
+
+/* The Panel (hidden by default, animated open and close) */
 .panel {
-  background-color: darkslategrey;
+  background-color: grey;
   overflow: hidden;
   padding: 0 18px;
-  display: none;
+  /* Initial padding */
+  max-height: 0;
+  /* Initial height of 0 for hidden state */
+  transition: max-height 0.4s ease, padding 0.4s ease;
+  /* Smooth animation */
   box-sizing: border-box;
-  transition: max-height 0.4s ease;
-  cursor: default;
+  color: #eee;
+  font-weight: bold;
+}
+
+/* Animation when the accordion is active (open state) */
+.panel.active {
+  background-color: #333;
+  /* Change panel background when active */
+  color: rgb(109, 109, 109);
+  /* Change text color when the panel is open */
+}
+
+.lesson-text {
+  color: #eee;
 }
 
 .accordion:after {
@@ -188,5 +256,6 @@ export default {
 
 .active:after {
   content: "\2796";
+  /* Change icon to minus when active */
 }
 </style>

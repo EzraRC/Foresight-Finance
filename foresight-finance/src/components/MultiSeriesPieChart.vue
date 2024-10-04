@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="chart-background">
         <!-- The Pie chart will only render if the data is available -->
         <PieChart v-if="chartData && chartData.labels.length" :chartData="chartData" :options="options" />
     </div>
@@ -20,11 +20,11 @@ export default {
     data() {
         return {
             chartData: {
-                labels: ['Red', 'Blue', 'Green'], // Data labels
+                labels: ['Beginner Lessons Completed', 'Intermediate Lessons Completed', 'Expert Lessons Completed'], // Data labels
                 datasets: [
                     {
                         label: 'Dataset 1',
-                        backgroundColor: ['#FF6384', '#36A2EB', '#4BC0C0'],
+                        backgroundColor: ['#4BC0C0', '#36A2EB', '#FF6384'],
                         data: [300, 50, 100], // First dataset values
                     },
                     {
@@ -50,4 +50,9 @@ export default {
 
 <style scoped>
 /* Add custom styles if necessary */
+.chart-background{
+    background-color: rgba(255, 255, 255, 0.75);
+    border-radius: 1rem;
+    padding-bottom: 25px;
+}
 </style>
