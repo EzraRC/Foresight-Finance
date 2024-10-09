@@ -83,14 +83,11 @@ dates.index = np.linspace(1, len(dates), len(dates))
 # https://onlinelibrary.wiley.com/doi/full/10.1111/0022-1082.00265
 # reference: https://www.quantopian.com/posts/an-empirical-algorithmic-evaluation-of-technical-analysis
 def find_max_min(prices):
-    model = KernelReg(prices.values, prices.index.values, var_type='c', bw="cv_ls")  # Adjust to higher value
-    smooth_prices = pd.Series(data=model.fit([prices.index.values])[0], index=prices.index) # index also from 1
+    model = KernelReg(prices.values, prices.index.values, var_type='c', bw="cv_ls")
+    smooth_prices = pd.Series(data=model.fit([prices.index.values])[0], index=prices.index)
 
-    # use the minima and maxima from the smoothed timeseries
-    # to identify true local minima and maxima in the original timeseres
-    # by taking the maximum/minimum price within a t-1, t+1 window in the smoothed timeseries
-    smooth_prices_max_indices = argrelextrema(smooth_prices.values, np.greater, order=1)[0]  # Use larger order
-    smooth_prices_min_indices = argrelextrema(smooth_prices.values, np.less, order=1)[0]    # Use larger order
+    smooth_prices_max_indices = argrelextrema(smooth_prices.values, np.greater, order=1)[0]
+    smooth_prices_min_indices = argrelextrema(smooth_prices.values, np.less, order=1)[0]
 
     price_max_indices = []
     for i in smooth_prices_max_indices:
@@ -101,19 +98,24 @@ def find_max_min(prices):
     for i in smooth_prices_min_indices:
         if 1 < i < len(prices)-1:
             price_min_indices.append(prices.iloc[i-2:i+2].idxmin())
-        
+
     price_max = prices.loc[price_max_indices]
     price_min = prices.loc[price_min_indices]
     max_min = pd.concat([price_max, price_min]).sort_index()
-    max_min = max_min[~max_min.duplicated()] # deduplicate points that are both maximum and minimum
-    max_min
-    
+    max_min = max_min[~max_min.duplicated()]  # Remove duplicates
+
+    # Assign types
+    max_min_types = pd.Series(data=['max']*len(price_max_indices) + ['min']*len(price_min_indices), 
+                             index=price_max_indices + price_min_indices)
+    max_min_types = max_min_types.sort_index()
+
     return smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
-            price_max_indices, price_min_indices, max_min
+           price_max_indices, price_min_indices, max_min, max_min_types
+
 
 print("FINDING MAX AND MIN OF PRICES")
 smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
-            price_max_indices, price_min_indices, max_min = find_max_min(prices)
+price_max_indices, price_min_indices, max_min, max_min_types = find_max_min(prices)
 
 fig, ax = plt.subplots(figsize=(20,10), dpi=200)
 
@@ -163,83 +165,103 @@ plot_window(dates, prices, smooth_prices,
             price_max_indices, price_min_indices, 
             start=18, end=34, ax=None)
 
-def find_patterns(max_min):
+def find_patterns(max_min, max_min_types):
     patterns = defaultdict(list)
     last_pattern_end = None  # Track the end of the last detected pattern
 
-    for i in range(10, len(max_min)):  # Using larger window size, e.g., 10 instead of 5
+    for i in range(10, len(max_min)):  # Using a window size of 10
         window = max_min.iloc[i-10:i]
-        
-        # Exclude overlapping patterns by checking the start of the current window
-        if last_pattern_end and window.index[0] <= last_pattern_end + 10:  # Adjust the overlap range here
+        window_types = max_min_types.iloc[i-10:i]
+
+        # Exclude overlapping patterns
+        if last_pattern_end and window.index[0] <= last_pattern_end + 10:
             continue
 
-        # Pattern must play out in less than 36 minutes (adjust time frame if needed)
+        # Ensure the pattern occurs within a specified time frame
         if window.index[-1] - window.index[0] > 35:
             continue
 
-        # Using the notation from the paper to avoid mistakes
+        # Extract the first five points in the window
         e1, e2, e3, e4, e5 = window.iloc[:5]
+        e1_type, e2_type, e3_type, e4_type, e5_type = window_types.iloc[:5]
         rtop_g1 = np.mean([e1, e3, e5])
         rtop_g2 = np.mean([e2, e4])
-        
-        #if abs(e1 - e5) > 0.05*np.mean([e1, e5]):  # Only consider significant changes (>5%)
-        if True:
-            # Head and Shoulders
-            if (e1 > e2) and (e3 > e1) and (e3 > e5) and \
-                (abs(e1 - e5) <= 0.03*np.mean([e1,e5])) and \
-                (abs(e2 - e4) <= 0.03*np.mean([e1,e5])):
-                    patterns['HS'].append((window.index[0], window.index[-1]))
-                    last_pattern_end = window.index[-1]  # Update last pattern end
 
-            # Inverse Head and Shoulders
-            elif (e1 < e2) and (e3 < e1) and (e3 < e5) and \
-                (abs(e1 - e5) <= 0.03*np.mean([e1,e5])) and \
-                (abs(e2 - e4) <= 0.03*np.mean([e1,e5])):
-                    patterns['IHS'].append((window.index[0], window.index[-1]))
-                    last_pattern_end = window.index[-1]  # Update last pattern end
+        # Existing Patterns
+        # Head and Shoulders
+        if (e1 > e2) and (e3 > e1) and (e3 > e5) and \
+           (abs(e1 - e5) <= 0.03 * np.mean([e1, e5])) and \
+           (abs(e2 - e4) <= 0.03 * np.mean([e1, e5])):
+            patterns['HS'].append((window.index[0], window.index[-1]))
+            last_pattern_end = window.index[-1]
 
-            # Broadening Top
-            elif (e1 > e2) and (e1 < e3) and (e3 < e5) and (e2 > e4):
-                patterns['BTOP'].append((window.index[0], window.index[-1]))
-                last_pattern_end = window.index[-1]  # Update last pattern end
+        # Inverse Head and Shoulders
+        elif (e1 < e2) and (e3 < e1) and (e3 < e5) and \
+             (abs(e1 - e5) <= 0.03 * np.mean([e1, e5])) and \
+             (abs(e2 - e4) <= 0.03 * np.mean([e1, e5])):
+            patterns['IHS'].append((window.index[0], window.index[-1]))
+            last_pattern_end = window.index[-1]
 
-            # Broadening Bottom
-            elif (e1 < e2) and (e1 > e3) and (e3 > e5) and (e2 < e4):
-                patterns['BBOT'].append((window.index[0], window.index[-1]))
-                last_pattern_end = window.index[-1]  # Update last pattern end
+        # Broadening Top
+        elif (e1 > e2) and (e1 < e3) and (e3 < e5) and (e2 > e4):
+            patterns['BTOP'].append((window.index[0], window.index[-1]))
+            last_pattern_end = window.index[-1]
 
-            # Triangle Top
-            elif (e1 > e2) and (e1 > e3) and (e3 > e5) and (e2 < e4):
-                patterns['TTOP'].append((window.index[0], window.index[-1]))
-                last_pattern_end = window.index[-1]  # Update last pattern end
+        # Broadening Bottom
+        elif (e1 < e2) and (e1 > e3) and (e3 > e5) and (e2 < e4):
+            patterns['BBOT'].append((window.index[0], window.index[-1]))
+            last_pattern_end = window.index[-1]
 
-            # Triangle Bottom
-            elif (e1 < e2) and (e1 < e3) and (e3 < e5) and (e2 > e4):
-                patterns['TBOT'].append((window.index[0], window.index[-1]))
-                last_pattern_end = window.index[-1]  # Update last pattern end
+        # Triangle Top
+        elif (e1 > e2) and (e1 > e3) and (e3 > e5) and (e2 < e4):
+            patterns['TTOP'].append((window.index[0], window.index[-1]))
+            last_pattern_end = window.index[-1]
 
-            # Rectangle Top
-            elif (e1 > e2) and (abs(e1-rtop_g1)/rtop_g1 < 0.0075) and \
-                (abs(e3-rtop_g1)/rtop_g1 < 0.0075) and (abs(e5-rtop_g1)/rtop_g1 < 0.0075) and \
-                (abs(e2-rtop_g2)/rtop_g2 < 0.0075) and (abs(e4-rtop_g2)/rtop_g2 < 0.0075) and \
-                (min(e1, e3, e5) > max(e2, e4)):
-                patterns['RTOP'].append((window.index[0], window.index[-1]))
-                last_pattern_end = window.index[-1]  # Update last pattern end
+        # Triangle Bottom
+        elif (e1 < e2) and (e1 < e3) and (e3 < e5) and (e2 > e4):
+            patterns['TBOT'].append((window.index[0], window.index[-1]))
+            last_pattern_end = window.index[-1]
 
-            # Rectangle Bottom
-            elif (e1 < e2) and (abs(e1-rtop_g1)/rtop_g1 < 0.0075) and \
-                (abs(e3-rtop_g1)/rtop_g1 < 0.0075) and (abs(e5-rtop_g1)/rtop_g1 < 0.0075) and \
-                (abs(e2-rtop_g2)/rtop_g2 < 0.0075) and (abs(e4-rtop_g2)/rtop_g2 < 0.0075) and \
-                (max(e1, e3, e5) > min(e2, e4)):
-                patterns['RBOT'].append((window.index[0], window.index[-1]))
-                last_pattern_end = window.index[-1]  # Update last pattern end
+        # Rectangle Top
+        elif (e1 > e2) and (abs(e1 - rtop_g1)/rtop_g1 < 0.0075) and \
+             (abs(e3 - rtop_g1)/rtop_g1 < 0.0075) and (abs(e5 - rtop_g1)/rtop_g1 < 0.0075) and \
+             (abs(e2 - rtop_g2)/rtop_g2 < 0.0075) and (abs(e4 - rtop_g2)/rtop_g2 < 0.0075) and \
+             (min(e1, e3, e5) > max(e2, e4)):
+            patterns['RTOP'].append((window.index[0], window.index[-1]))
+            last_pattern_end = window.index[-1]
+
+        # Rectangle Bottom
+        elif (e1 < e2) and (abs(e1 - rtop_g1)/rtop_g1 < 0.0075) and \
+             (abs(e3 - rtop_g1)/rtop_g1 < 0.0075) and (abs(e5 - rtop_g1)/rtop_g1 < 0.0075) and \
+             (abs(e2 - rtop_g2)/rtop_g2 < 0.0075) and (abs(e4 - rtop_g2)/rtop_g2 < 0.0075) and \
+             (max(e1, e3, e5) > min(e2, e4)):
+            patterns['RBOT'].append((window.index[0], window.index[-1]))
+            last_pattern_end = window.index[-1]
+
+        # **New Patterns: Ascending and Descending Triangles**
+
+        # Ascending Triangle
+        # Conditions:
+        # - Highs are approximately equal (within 3%)
+        # - Lows are increasing
+        elif (abs(e1 - e3) / rtop_g1 < 0.03) and (abs(e3 - e5) / rtop_g1 < 0.03) and (e2 < e4):
+            patterns['ATRI'].append((window.index[0], window.index[-1]))
+            last_pattern_end = window.index[-1]
+
+        # Descending Triangle
+        # Conditions:
+        # - Lows are approximately equal (within 3%)
+        # - Highs are decreasing
+        elif (abs(e2 - e4) / rtop_g1 < 0.03) and (e1 > e3) and (e3 > e5):
+            patterns['DTRI'].append((window.index[0], window.index[-1]))
+            last_pattern_end = window.index[-1]
 
     return patterns
 
 
+
 print("FINDING PATTERNS")
-patterns = find_patterns(max_min)
+patterns = find_patterns(max_min, max_min_types)
 patterns
 
 def visualize_patterns(dates, prices, smooth_prices, 
@@ -271,30 +293,38 @@ print("VISAULZING ALL PATTERNS")
 def visualize_all_patterns(dates, prices, patterns):
     fig, ax = plt.subplots(figsize=(20, 10), dpi=200)
 
-    # Plot only the prices for the 5-day period
+    # Plot the prices
     ax.plot(dates, prices, label='Prices')
     ax.set_xticks(np.arange(0, len(dates), 120))  # Adjusting xticks for minute data
     ax.tick_params(axis='x', rotation=45)
 
-    # Define a marker style for each pattern type
-    markers = {'HS': 'o', 'IHS': '^', 'BTOP': 's', 'BBOT': 'P', 
-               'TTOP': 'X', 'TBOT': 'D', 'RTOP': '*', 'RBOT': 'v'}
+    # Define marker styles for each pattern type, including the new ones
+    markers = {
+        'HS': 'o', 'IHS': '^', 'BTOP': 's', 'BBOT': 'P', 
+        'TTOP': 'X', 'TBOT': 'D', 'RTOP': '*', 'RBOT': 'v',
+        'ATRI': 'h', 'DTRI': 'p'  # New markers for Ascending and Descending Triangles
+    }
 
-    colors = {'HS': 'cyan', 'IHS': 'orange', 'BTOP': 'pink', 'BBOT': 'yellow', 
-              'TTOP': 'magenta', 'TBOT': 'lime', 'RTOP': 'brown', 'RBOT': 'black'}
+    colors = {
+        'HS': 'cyan', 'IHS': 'orange', 'BTOP': 'pink', 'BBOT': 'yellow', 
+        'TTOP': 'magenta', 'TBOT': 'lime', 'RTOP': 'brown', 'RBOT': 'black',
+        'ATRI': 'blue', 'DTRI': 'red'  # New colors for the new patterns
+    }
 
-    # Loop through patterns and plot markers where the patterns are detected
+    # Loop through patterns and plot markers
     for pattern_name, end_day_nums in patterns.items():
         for start_date, end_date in end_day_nums:
-            # Use the midpoint of the pattern's date range to place the marker
+            # Calculate the midpoint for marker placement
             midpoint = (start_date + end_date) // 2
             ax.scatter(dates.loc[midpoint], prices.loc[midpoint], 
-                       s=100, marker=markers[pattern_name], color=colors[pattern_name], 
-                       label=f'{pattern_name}' if f'{pattern_name}' not in ax.get_legend_handles_labels()[1] else None)
+                       s=100, marker=markers.get(pattern_name, 'x'), 
+                       color=colors.get(pattern_name, 'grey'), 
+                       label=pattern_name if pattern_name not in ax.get_legend_handles_labels()[1] else None)
 
     ax.legend(loc='upper left', fontsize='small')
     ax.grid()
-
     plt.show()
 
+
 visualize_all_patterns(dates, prices, patterns)
+print("hello world!")
