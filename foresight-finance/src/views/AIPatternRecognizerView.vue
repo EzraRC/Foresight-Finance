@@ -45,13 +45,21 @@
       <p style="color: white;">Refreshing graph in: {{ countdown }}s</p>
     </div>
 
-    <!-- Modal for displaying stock symbols https://gretlcycu.wordpress.com/wp-content/uploads/2013/08/quick-ticker-symbol-list.pdf -->
+    <!-- Modal for displaying stock symbols i got it from https://gretlcycu.wordpress.com/wp-content/uploads/2013/08/quick-ticker-symbol-list.pdf -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
         <h2>Stock Symbols & Company Names</h2>
         <ul>
-          <li v-for="symbol in stockSymbols" :key="symbol">{{ symbol }}</li>
-        </ul>
+      <li v-for="(company, index) in stockSymbols" :key="index">
+        <a 
+          href="javascript:void(0)" 
+          @click="selectSymbol(company.symbol)"
+        >
+          {{ company.symbol }}
+        </a>
+        - {{ company?.name || 'Unknown Company' }}
+      </li>
+    </ul>
         <button @click="closeModal">Close</button>
       </div>
     </div>
@@ -79,18 +87,31 @@ export default {
     this.fetchStockSymbols(); // Fetch symbols when component is created
   },
   methods: {
-    async fetchStockSymbols() {
-      try {
-        const response = await fetch('http://127.0.0.1:5000/src/static/stock_data.txt');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.text(); // Get the text from the response
-        this.stockSymbols = data.split('\n').map(line => line.trim()).filter(line => line); // Split by newline and clean up
-      } catch (error) {
-        console.error('Error fetching stock symbols:', error);
-      }
+  async fetchStockSymbols() {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/src/static/stock_data.txt');
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+      const data = await response.text();
+      this.stockSymbols = data
+        .split('\n')
+        .map(line => {
+          const [symbol, ...nameParts] = line.trim().split(' ');
+          const name = nameParts.join(' ');
+          return symbol ? { symbol, name: name || 'Unknown' } : null;
+        })
+        .filter(entry => entry); // Remove null or invalid entries
+    } catch (error) {
+      console.error('Error fetching stock symbols:', error);
+    }
+  },
+
+    selectSymbol(symbol) {
+      this.ticker = symbol; // Set the selected symbol in the search bar
+      this.updateChart(); // Trigger chart update
+      this.closeModal(); // Close the modal
     },
+
     getChartUrl(ticker) {
       return `http://localhost:8080/candlestick_chart.html?ticker=${ticker}&timestamp=${new Date().getTime()}`;
     },
@@ -125,16 +146,20 @@ export default {
 
           console.log(`Chart updated for ticker: ${this.ticker}`);
         } else {
-          console.error('Error with data response:', data.message);
-          this.stockCode = 'Error: Invalid ticker';
-        }
-
+            console.error('Error with data response:', data.message);
+            this.clearStockInfo();
+          }
         } catch (error) {
           console.error('Error fetching chart data:', error);
         } finally {
           this.loading = false;
         }
       }, 2000);
+    },
+    clearStockInfo() {
+      this.stockCode = 'Error: Invalid ticker';
+      this.stockName = this.currentPrice = this.marketCap = '';
+      this.percentChange = this.volume = this.industry = this.sector = '';
     },
     openModal() {
       this.isModalOpen = true; // Open modal without fetching from a file
