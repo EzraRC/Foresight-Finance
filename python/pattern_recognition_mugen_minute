@@ -10,6 +10,7 @@ from scipy.signal import argrelextrema
 from statsmodels.nonparametric.kernel_regression import KernelReg
 from yahoofinancials import YahooFinancials
 import yfinance as yf
+import matplotlib.patches as patches
 
 start_date = '2023-01-01'
 end_date = '2023-12-31'
@@ -294,7 +295,7 @@ def visualize_all_patterns(dates, prices, patterns):
     fig, ax = plt.subplots(figsize=(20, 10), dpi=200)
 
     # Plot the prices
-    ax.plot(dates, prices, label='Prices')
+    ax.plot(dates, prices, label='Prices', color='black')
     ax.set_xticks(np.arange(0, len(dates), 120))  # Adjusting xticks for minute data
     ax.tick_params(axis='x', rotation=45)
 
@@ -311,17 +312,56 @@ def visualize_all_patterns(dates, prices, patterns):
         'ATRI': 'blue', 'DTRI': 'red'  # New colors for the new patterns
     }
 
-    # Loop through patterns and plot markers
-    for pattern_name, end_day_nums in patterns.items():
-        for start_date, end_date in end_day_nums:
-            # Calculate the midpoint for marker placement
-            midpoint = (start_date + end_date) // 2
-            ax.scatter(dates.loc[midpoint], prices.loc[midpoint], 
-                       s=100, marker=markers.get(pattern_name, 'x'), 
-                       color=colors.get(pattern_name, 'grey'), 
-                       label=pattern_name if pattern_name not in ax.get_legend_handles_labels()[1] else None)
+    # To keep track of which labels have been added to the legend
+    added_labels = set()
 
-    ax.legend(loc='upper left', fontsize='small')
+    # Loop through patterns and plot markers and bounding boxes
+    for pattern_name, pattern_instances in patterns.items():
+        for start_idx, end_idx in pattern_instances:
+            # Calculate the midpoint for marker placement
+            midpoint = (start_idx + end_idx) // 2
+
+            # Plot the marker
+            ax.scatter(
+                dates.loc[midpoint], prices.loc[midpoint], 
+                s=100, marker=markers.get(pattern_name, 'x'), 
+                color=colors.get(pattern_name, 'grey'), 
+                label=pattern_name if pattern_name not in added_labels else None
+            )
+            if pattern_name not in added_labels:
+                added_labels.add(pattern_name)
+
+            # Determine the window for the bounding box
+            window_dates = dates.loc[start_idx:end_idx]
+            window_prices = prices.loc[start_idx:end_idx]
+
+            # Get the min and max prices within the window
+            min_price = window_prices.min()
+            max_price = window_prices.max()
+
+            # Define the rectangle parameters
+            start_date = window_dates.iloc[0]
+            end_date_val = window_dates.iloc[-1]
+
+            # Create a rectangle patch
+            rect = patches.Rectangle(
+                (start_date, min_price),  # (x,y)
+                end_date_val - start_date,  # width
+                max_price - min_price,      # height
+                linewidth=2,
+                edgecolor=colors.get(pattern_name, 'grey'),
+                facecolor=colors.get(pattern_name, 'grey'),
+                alpha=0.2  # Transparency
+            )
+
+            # Add the rectangle to the plot
+            ax.add_patch(rect)
+
+    # Create a custom legend to avoid duplicate labels
+    handles, labels = ax.get_legend_handles_labels()
+    unique = dict(zip(labels, handles))
+    ax.legend(unique.values(), unique.keys(), loc='upper left', fontsize='small')
+
     ax.grid()
     plt.show()
 
