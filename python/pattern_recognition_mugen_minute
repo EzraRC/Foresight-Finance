@@ -249,6 +249,18 @@ def find_patterns(max_min, max_min_types):
             patterns['DTRI'].append((window.index[0], window.index[-1]))
             last_pattern_end = window.index[-1]
 
+        # Pennant
+        elif (e1 > e3 > e5) and (e2 < e4):
+            slope_highs = (e5 - e1) / (window.index[-1] - window.index[0])
+            slope_lows = (e4 - e2) / (window.index[-1] - window.index[0])
+
+            # Check if slopes are converging (similar magnitude but opposite signs)
+            if abs(slope_highs) > 0.001 and abs(slope_lows) > 0.001 and \
+               abs(abs(slope_highs) - abs(slope_lows)) < 0.005:
+                patterns['PN'].append((window.index[0], window.index[-1]))
+                last_pattern_end = window.index[-1]
+
+
     return patterns
 
 
@@ -287,7 +299,7 @@ def visualize_all_patterns(dates, prices, patterns):
     fig, ax = plt.subplots(figsize=(20, 10), dpi=200)
 
     # Plot the prices
-    ax.plot(dates, prices, label='Prices', color='black')
+    ax.plot(dates, prices, label='Prices', color='black', linewidth=1)
     ax.set_xticks(np.arange(0, len(dates), 120))  # Adjusting xticks for minute data
     ax.tick_params(axis='x', rotation=45)
 
@@ -295,13 +307,13 @@ def visualize_all_patterns(dates, prices, patterns):
     markers = {
         'HS': 'o', 'IHS': '^', 'BTOP': 's', 'BBOT': 'P', 
         'TTOP': 'X', 'TBOT': 'D', 'RTOP': '*', 'RBOT': 'v',
-        'ATRI': 'h', 'DTRI': 'p'  # New markers for Ascending and Descending Triangles
+        'PN': '8', 'WD_R': 'p', 'WD_F': 'h'  # New markers for Pennant and Wedges
     }
 
     colors = {
         'HS': 'cyan', 'IHS': 'orange', 'BTOP': 'pink', 'BBOT': 'yellow', 
         'TTOP': 'magenta', 'TBOT': 'lime', 'RTOP': 'brown', 'RBOT': 'black',
-        'ATRI': 'blue', 'DTRI': 'red'  # New colors for the new patterns
+        'PN': 'blue', 'WD_R': 'green', 'WD_F': 'red'  # New colors for Pennant and Wedges
     }
 
     # To keep track of which labels have been added to the legend
