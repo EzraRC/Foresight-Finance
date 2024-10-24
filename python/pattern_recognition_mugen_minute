@@ -284,11 +284,11 @@ def visualize_patterns(dates, prices, smooth_prices,
             i += 1
         plt.show()
 
-print("VISUALIZING PATTERNS")
-visualize_patterns(dates, prices, smooth_prices, 
-                       smooth_prices_max_indices, smooth_prices_min_indices, 
-                       price_max_indices, price_min_indices, 
-                       patterns)
+#print("VISUALIZING PATTERNS")
+#visualize_patterns(dates, prices, smooth_prices, 
+                       #smooth_prices_max_indices, smooth_prices_min_indices, 
+                       #price_max_indices, price_min_indices, 
+                       #patterns)
 
 print("VISAULZING ALL PATTERNS")
 def visualize_all_patterns(dates, prices, patterns):
