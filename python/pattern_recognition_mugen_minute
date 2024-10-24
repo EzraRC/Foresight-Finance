@@ -239,20 +239,12 @@ def find_patterns(max_min, max_min_types):
             patterns['RBOT'].append((window.index[0], window.index[-1]))
             last_pattern_end = window.index[-1]
 
-        # **New Patterns: Ascending and Descending Triangles**
-
         # Ascending Triangle
-        # Conditions:
-        # - Highs are approximately equal (within 3%)
-        # - Lows are increasing
         elif (abs(e1 - e3) / rtop_g1 < 0.03) and (abs(e3 - e5) / rtop_g1 < 0.03) and (e2 < e4):
             patterns['ATRI'].append((window.index[0], window.index[-1]))
             last_pattern_end = window.index[-1]
 
         # Descending Triangle
-        # Conditions:
-        # - Lows are approximately equal (within 3%)
-        # - Highs are decreasing
         elif (abs(e2 - e4) / rtop_g1 < 0.03) and (e1 > e3) and (e3 > e5):
             patterns['DTRI'].append((window.index[0], window.index[-1]))
             last_pattern_end = window.index[-1]
