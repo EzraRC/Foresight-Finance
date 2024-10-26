@@ -307,13 +307,13 @@ def visualize_all_patterns(dates, prices, patterns):
     markers = {
         'HS': 'o', 'IHS': '^', 'BTOP': 's', 'BBOT': 'P', 
         'TTOP': 'X', 'TBOT': 'D', 'RTOP': '*', 'RBOT': 'v',
-        'PN': '8', 'WD_R': 'p', 'WD_F': 'h'  # New markers for Pennant and Wedges
+        'PN': '8'  # New markers for Pennant
     }
 
     colors = {
         'HS': 'cyan', 'IHS': 'orange', 'BTOP': 'pink', 'BBOT': 'yellow', 
         'TTOP': 'magenta', 'TBOT': 'lime', 'RTOP': 'brown', 'RBOT': 'black',
-        'PN': 'blue', 'WD_R': 'green', 'WD_F': 'red'  # New colors for Pennant and Wedges
+        'PN': 'blue', # New colors for Pennant 
     }
 
     # To keep track of which labels have been added to the legend
