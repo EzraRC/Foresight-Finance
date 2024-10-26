@@ -4,6 +4,8 @@ import os
 from flask import Flask, request, jsonify, send_from_directory
 from datetime import datetime
 from flask_cors import CORS
+import numpy as np
+import pattern_recognition_mugen_minute as pr
 
 app = Flask(__name__)
 CORS(app)
@@ -29,6 +31,17 @@ def generate_chart():
 
     # Filter data to include only trading hours
     data = filter_trading_hours(data)
+
+    df = data.reset_index() #Reset index of stock data for the recognition
+    df, prices, dates = df, df['Close'], df['Datetime'] #Seperatingit for easier use
+
+    prices.index = np.linspace(1, len(prices), len(prices)) #set the index from 1 for Nadaraya-Watson kernel regression
+    dates.index = np.linspace(1, len(dates), len(dates))
+
+    smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
+    price_max_indices, price_min_indices, max_min, max_min_types = pattern_recognition_mugen_minute.find_max_min(prices) #FInd max and min of prices to smooth it
+    
+    patterns = pr.find_patterns(max_min, max_min_types) #Find Patterns
 
     # Create a candlestick chart
     try:

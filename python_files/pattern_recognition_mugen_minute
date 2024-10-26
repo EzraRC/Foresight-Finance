@@ -371,4 +371,3 @@ def visualize_all_patterns(dates, prices, patterns):
 
 
 visualize_all_patterns(dates, prices, patterns)
-print("hello world!")
