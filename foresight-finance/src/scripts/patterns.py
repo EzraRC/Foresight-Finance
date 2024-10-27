@@ -3,6 +3,7 @@
 
 from collections import defaultdict
 
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,9 +13,6 @@ from yahoofinancials import YahooFinancials
 import yfinance as yf
 import matplotlib.patches as patches
 
-start_date = '2023-01-01'
-end_date = '2023-12-31'
-stock_code = 'AAPL' # e.g. AMZN, GOOG, FB, NVDA
 """
 def preprocess_data(start_date, end_date, stock_code):
     stock_data = YahooFinancials(stock_code).get_historical_price_data(start_date, end_date, 'daily')
@@ -70,16 +68,7 @@ def preprocess_data(stock_code):
     # Return dataframe, Close prices, and Datetime column
     return df, df['Close'], df['Datetime']
 
-print("PROCESSING DATA")
 
-#df, prices, dates = preprocess_data(start_date, end_date, stock_code)
-
-df, prices, dates = preprocess_data(stock_code)
-
-print("SETTING PRICE INDEXES")
-# set the index from 1 for Nadaraya-Watson kernel regression
-prices.index = np.linspace(1, len(prices), len(prices))
-dates.index = np.linspace(1, len(dates), len(dates))
 
 # https://onlinelibrary.wiley.com/doi/full/10.1111/0022-1082.00265
 # reference: https://www.quantopian.com/posts/an-empirical-algorithmic-evaluation-of-technical-analysis
@@ -114,28 +103,7 @@ def find_max_min(prices):
            price_max_indices, price_min_indices, max_min, max_min_types
 
 
-print("FINDING MAX AND MIN OF PRICES")
-smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
-price_max_indices, price_min_indices, max_min, max_min_types = find_max_min(prices)
 
-fig, ax = plt.subplots(figsize=(20,10), dpi=200)
-
-ax.plot(dates, prices, label='Prices')
-ax.plot(dates, smooth_prices, label='Smoothed Prices', linestyle='dashed')
-ax.set_xticks(np.arange(0, len(dates), 30))
-    
-smooth_prices_max = smooth_prices.loc[smooth_prices_max_indices]
-smooth_prices_min = smooth_prices.loc[smooth_prices_min_indices]
-price_max = prices.loc[price_max_indices]
-price_min = prices.loc[price_min_indices]
-
-ax.scatter(dates.loc[smooth_prices_max.index], smooth_prices_max.values, s=20, color='red', label='Smoothed Prices Maxima')
-ax.scatter(dates.loc[smooth_prices_min.index], smooth_prices_min.values, s=20, color='purple', label='Smoothed Prices Minima')
-
-ax.scatter(dates.loc[price_max.index], price_max.values, s=50, color='green', label='Prices Maxima')
-ax.scatter(dates.loc[price_min.index], price_min.values, s=50, color='blue', label='Prices Minima')
-ax.legend(loc='upper left')
-ax.grid()
 
 def plot_window(dates, prices, smooth_prices, 
                 smooth_prices_max_indices, smooth_prices_min_indices,
@@ -161,10 +129,7 @@ def plot_window(dates, prices, smooth_prices,
     ax.legend(fontsize='small')
     ax.grid()
 
-plot_window(dates, prices, smooth_prices, 
-            smooth_prices_max_indices, smooth_prices_min_indices,
-            price_max_indices, price_min_indices, 
-            start=18, end=34, ax=None)
+
 
 def find_patterns(max_min, max_min_types):
     patterns = defaultdict(list)
@@ -264,11 +229,6 @@ def find_patterns(max_min, max_min_types):
     return patterns
 
 
-
-print("FINDING PATTERNS")
-patterns = find_patterns(max_min, max_min_types)
-patterns
-
 def visualize_patterns(dates, prices, smooth_prices, 
                        smooth_prices_max_indices, smooth_prices_min_indices, 
                        price_max_indices, price_min_indices, 
@@ -294,7 +254,7 @@ def visualize_patterns(dates, prices, smooth_prices,
                        #price_max_indices, price_min_indices, 
                        #patterns)
 
-print("VISAULZING ALL PATTERNS")
+
 def visualize_all_patterns(dates, prices, patterns):
     fig, ax = plt.subplots(figsize=(20, 10), dpi=200)
 
@@ -370,4 +330,53 @@ def visualize_all_patterns(dates, prices, patterns):
     plt.show()
 
 
-visualize_all_patterns(dates, prices, patterns)
+
+if __name__ == "__main__":
+    start_date = '2023-01-01'
+    end_date = '2023-12-31'
+    stock_code = 'AAPL' # e.g. AMZN, GOOG, FB, NVDA
+    print("PROCESSING DATA")
+
+    #df, prices, dates = preprocess_data(start_date, end_date, stock_code)
+
+    df, prices, dates = preprocess_data(stock_code)
+
+    print("SETTING PRICE INDEXES")
+    # set the index from 1 for Nadaraya-Watson kernel regression
+    prices.index = np.linspace(1, len(prices), len(prices))
+    dates.index = np.linspace(1, len(dates), len(dates))
+
+    print("FINDING MAX AND MIN OF PRICES")
+    smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
+    price_max_indices, price_min_indices, max_min, max_min_types = find_max_min(prices)
+
+    fig, ax = plt.subplots(figsize=(20,10), dpi=200)
+
+    ax.plot(dates, prices, label='Prices')
+    ax.plot(dates, smooth_prices, label='Smoothed Prices', linestyle='dashed')
+    ax.set_xticks(np.arange(0, len(dates), 30))
+        
+    smooth_prices_max = smooth_prices.loc[smooth_prices_max_indices]
+    smooth_prices_min = smooth_prices.loc[smooth_prices_min_indices]
+    price_max = prices.loc[price_max_indices]
+    price_min = prices.loc[price_min_indices]
+
+    ax.scatter(dates.loc[smooth_prices_max.index], smooth_prices_max.values, s=20, color='red', label='Smoothed Prices Maxima')
+    ax.scatter(dates.loc[smooth_prices_min.index], smooth_prices_min.values, s=20, color='purple', label='Smoothed Prices Minima')
+
+    ax.scatter(dates.loc[price_max.index], price_max.values, s=50, color='green', label='Prices Maxima')
+    ax.scatter(dates.loc[price_min.index], price_min.values, s=50, color='blue', label='Prices Minima')
+    ax.legend(loc='upper left')
+    ax.grid()
+
+    plot_window(dates, prices, smooth_prices, 
+            smooth_prices_max_indices, smooth_prices_min_indices,
+            price_max_indices, price_min_indices, 
+            start=18, end=34, ax=None)
+    
+    print("FINDING PATTERNS")
+    patterns = find_patterns(max_min, max_min_types)
+    patterns
+
+    print("VISAULZING ALL PATTERNS")
+    visualize_all_patterns(dates, prices, patterns)

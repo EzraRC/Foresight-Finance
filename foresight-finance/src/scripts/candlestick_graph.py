@@ -1,3 +1,4 @@
+print("Importing everything")
 import yfinance as yf
 import plotly.graph_objects as go
 import os
@@ -5,18 +6,19 @@ from flask import Flask, request, jsonify, send_from_directory
 from datetime import datetime
 from flask_cors import CORS
 import numpy as np
-import pattern_recognition_mugen_minute as pr
+import patterns as pr
+print("Post import")
 
 app = Flask(__name__)
 CORS(app)
-
+print("Pre Homapage")
 @app.route('/')
 def homepage():
     return '''
     <h1>Welcome to the Stock Data App</h1>
     <p>Use <a href="/generate_chart?ticker=NVDA">/generate_chart</a> to generate a candlestick chart.</p>
     '''
-
+print("Generating Chart")
 @app.route('/generate_chart', methods=['GET'])
 def generate_chart():
     ticker = request.args.get('ticker', default='NVDA', type=str)  # Default to NVDA if no ticker provided
@@ -29,18 +31,22 @@ def generate_chart():
         print("No data found for the ticker.")  # Log if no data found
         return jsonify({"success": False, "message": "No data found for the ticker."}), 404
 
+    print("Pre filter")
     # Filter data to include only trading hours
     data = filter_trading_hours(data)
 
     df = data.reset_index() #Reset index of stock data for the recognition
     df, prices, dates = df, df['Close'], df['Datetime'] #Seperatingit for easier use
 
+    print("Indexing")
     prices.index = np.linspace(1, len(prices), len(prices)) #set the index from 1 for Nadaraya-Watson kernel regression
     dates.index = np.linspace(1, len(dates), len(dates))
 
+    print("find max min")
     smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
-    price_max_indices, price_min_indices, max_min, max_min_types = pattern_recognition_mugen_minute.find_max_min(prices) #FInd max and min of prices to smooth it
+    price_max_indices, price_min_indices, max_min, max_min_types = pr.find_max_min(prices) #FInd max and min of prices to smooth it
     
+    print("patterns")
     patterns = pr.find_patterns(max_min, max_min_types) #Find Patterns
 
     # Create a candlestick chart
