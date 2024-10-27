@@ -1,4 +1,3 @@
-print("Importing everything")
 import yfinance as yf
 import plotly.graph_objects as go
 import os
@@ -7,18 +6,18 @@ from datetime import datetime
 from flask_cors import CORS
 import numpy as np
 import patterns as pr
-print("Post import")
+
 
 app = Flask(__name__)
 CORS(app)
-print("Pre Homapage")
+
 @app.route('/')
 def homepage():
     return '''
     <h1>Welcome to the Stock Data App</h1>
     <p>Use <a href="/generate_chart?ticker=NVDA">/generate_chart</a> to generate a candlestick chart.</p>
     '''
-print("Generating Chart")
+
 @app.route('/generate_chart', methods=['GET'])
 def generate_chart():
     ticker = request.args.get('ticker', default='NVDA', type=str)  # Default to NVDA if no ticker provided
@@ -51,35 +50,91 @@ def generate_chart():
 
     # Create a candlestick chart
     try:
-        fig = go.Figure(data=[go.Candlestick(x=data.index.strftime('%m/%d\n%H:%M'),
-                                              open=data['Open'],
-                                              high=data['High'],
-                                              low=data['Low'],
-                                              close=data['Close'])])
+        fig = go.Figure(data=[go.Candlestick(
+            x=data.index.strftime('%m/%d\n%H:%M'),
+            open=data['Open'],
+            high=data['High'],
+            low=data['Low'],
+            close=data['Close']
+        )])
 
-        # Update layout for dark mode and consecutive data (no gaps)
+        # Update layout for dark mode and aesthetics
         fig.update_layout(
-            plot_bgcolor='black',  # black background
-            paper_bgcolor='rgba(32, 52, 68, 1.0)',  # Navy blue
+            plot_bgcolor='black',
+            paper_bgcolor='rgba(32, 52, 68, 1.0)',
             font_color='white',
             xaxis=dict(
-                showgrid=True, 
+                showgrid=True,
                 gridcolor='lightgray',
-                type='category',  # Treat x-axis as category to remove gaps
-                tickmode='auto',  # Automatically adjust ticks
-                nticks=10,  # Control how many ticks are visible when fully zoomed out
+                type='category',
+                tickmode='auto',
+                nticks=10,
                 ticks="outside",
-                ticklen=8,  # Length of the tick marks
+                ticklen=8,
             ),
             yaxis=dict(showgrid=True, gridcolor='lightgray'),
             margin=dict(l=10, r=10, t=10, b=10),
+            title=f"Candlestick Chart with Patterns for {ticker}",
         )
+
+        # Define marker styles and colors for each pattern type
+        marker_styles = {
+            'HS': {'symbol': 'circle', 'color': 'cyan'},
+            'IHS': {'symbol': 'triangle-up', 'color': 'orange'},
+            'BTOP': {'symbol': 'square', 'color': 'pink'},
+            'BBOT': {'symbol': 'star', 'color': 'yellow'},
+            'TTOP': {'symbol': 'x', 'color': 'magenta'},
+            'TBOT': {'symbol': 'diamond', 'color': 'lime'},
+            'RTOP': {'symbol': 'pentagon', 'color': 'brown'},
+            'RBOT': {'symbol': 'triangle-down', 'color': 'black'},
+            'PN': {'symbol': 'hexagon', 'color': 'blue'}
+        }
+
+        # Loop through each pattern to add markers and bounding boxes
+        for pattern_name, pattern_instances in patterns.items():
+            for start_idx, end_idx in pattern_instances:
+                midpoint = (start_idx + end_idx) // 2
+
+                # Add marker for the pattern midpoint
+                fig.add_trace(go.Scatter(
+                    x=[data.index[midpoint]],
+                    y=[data['Close'].iloc[midpoint]],
+                    mode='markers',
+                    marker=dict(
+                        symbol=marker_styles[pattern_name]['symbol'],
+                        color=marker_styles[pattern_name]['color'],
+                        size=10,
+                    ),
+                    name=pattern_name
+                ))
+
+                # Add bounding boxes for the patterns
+                start_date = data.index[start_idx]
+                end_date = data.index[end_idx]
+                min_price = data['Low'].iloc[start_idx:end_idx + 1].min()
+                max_price = data['High'].iloc[start_idx:end_idx + 1].max()
+
+                fig.add_shape(
+                    type="rect",
+                    x0=start_date,
+                    x1=end_date,
+                    y0=min_price,
+                    y1=max_price,
+                    line=dict(
+                        color=marker_styles[pattern_name]['color'],
+                        width=2
+                    ),
+                    fillcolor=marker_styles[pattern_name]['color'],
+                    opacity=0.2,
+                )
 
         # Save the chart as an HTML file
         output_directory = os.path.dirname(os.path.abspath(__file__))
-        output_file = os.path.join(output_directory, "candlestick_chart.html")
+        output_file = os.path.join(output_directory, "candlestick_chart_with_patterns.html")
         fig.write_html(output_file)
         print(f"Chart for {ticker} saved to: {output_file}")
+
+        fig.show()
 
     except Exception as e:
         print(f"Error creating chart: {e}")  # Log any errors during chart creation
