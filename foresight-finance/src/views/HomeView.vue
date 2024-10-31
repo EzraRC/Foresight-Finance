@@ -1,5 +1,6 @@
 <template>
   <div v-if="!loading">
+    <!-- Fixed Background Animation Layer -->
     <div 
       class="zoom-background" 
       :class="{ hidden: isFirstBufferHidden }" 
@@ -11,19 +12,22 @@
       :style="{ backgroundImage: `url(${secondBufferImage})` }">
     </div>
 
-    <div class="centered-content">
-      <h1 style="margin-top: 375px;">An advanced way to get ahead of the ever-changing markets</h1>
-      <p class="description-text" style="margin-top: 1000px;">
-        Build and maximize your portfolio with AI-enhanced pattern recognition
-      </p>
-      <div class="button-container" style="margin-top: 100px;">
-        <button class="action-button" @click="navigateToAIPR">Discover patterns now!</button>
-      </div>
-      <p class="description-text" style="margin-top: 1000px;">
-        We offer a variety of different lessons ranging from beginner topics to advanced technical patterns!
-      </p>
-      <div class="button-container" style="margin-top: 100px; margin-bottom: 50px;">
-        <button class="action-button" @click="navigateToLearning">Learn with us!</button>
+    <!-- Scrolling Content Layer -->
+    <div class="scroll-wrapper">
+      <div class="centered-content" style="margin-top: 330px;">
+        <h1>An advanced way to get ahead of the ever-changing markets</h1>
+        <p class="description-text" style="margin-top: 400px;">
+          Build and maximize your portfolio with AI-enhanced pattern recognition
+        </p>
+        <div class="button-container" style="margin-top: 700px; margin-left: 625px;">
+          <button class="action-button" @click="navigateToAIPR">Discover patterns now!</button>
+        </div>
+        <p class="description-text" style="margin-top: 1000px;">
+          We offer a variety of different lessons ranging from beginner topics to advanced technical patterns!
+        </p>
+        <div class="button-container" style="margin-top: 1000px; margin-bottom: 50px;">
+          <button class="action-button" @click="navigateToLearning">Learn with us!</button>
+        </div>
       </div>
     </div>
   </div>
@@ -76,7 +80,7 @@ export default {
     },
     handleScroll() {
       const scrollTop = document.documentElement.scrollTop;
-      const maxScrollTop = document.documentElement.scrollHeight - window.innerHeight;
+      const maxScrollTop = 3000; // Fixed scroll length in pixels
       const scrollFraction = scrollTop / maxScrollTop;
       const index = Math.min(this.images.length - 1, Math.floor(scrollFraction * this.images.length));
 
@@ -125,7 +129,12 @@ export default {
 }
 
 body {
-  height: 2000vh;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.scroll-wrapper {
+  height: 3000px; /* Fixed scroll height */
 }
 
 .zoom-background {
@@ -149,19 +158,18 @@ body {
 .centered-content {
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
+  justify-content: flex-start;
   align-items: center;
-  height: 100vh;
   text-align: center;
   z-index: 10;
   position: relative;
+  margin-top: 100px;
 }
 
 .centered-content h1 {
   color: white;
   font-size: 4rem;
   font-family: 'Trebuchet MS', sans-serif;
-  margin-bottom: 2rem;
 }
 
 .description-text {
@@ -169,7 +177,6 @@ body {
   font-size: 1.8rem;
   font-family: 'Trebuchet MS', sans-serif;
   max-width: 70%;
-  margin-bottom: 4rem;
   text-align: center;
 }
 
@@ -177,7 +184,7 @@ body {
   width: 100%;
   display: flex;
   justify-content: center;
-  margin: 40px 0;
+  margin-top: 100px;
 }
 
 .action-button {
