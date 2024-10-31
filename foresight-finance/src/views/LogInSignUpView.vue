@@ -23,9 +23,18 @@
           <button @click="login">Login</button>
           <p @click="switchMode">Don't have an account? Click here</p>
         </div>
-        
         <div class="auth-message">{{ message }}</div>
       </form>
+    </div>
+    <!-- Modal Popup for Level Selection -->
+    <div v-if="showLevelModal" class="modal-overlay">
+      <div class="modal">
+        <h3>Select Your Level</h3>
+        <button @click="selectLevel('1')">Beginner</button>
+        <button @click="selectLevel('2')">Intermediate</button>
+        <button @click="selectLevel('3')">Expert</button>
+        <button @click="signUp" :disabled="!selectedLevel">Create Account</button>
+      </div>
     </div>
   </div>
 </template>
@@ -33,6 +42,9 @@
 <script>
 // Import Firebase Auth from firebase.js
 import { auth } from "../firebase.js";
+import { query, collection, getDocs, orderBy, doc, addDoc } from "firebase/firestore";
+import { db } from '@/firebase';
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -50,6 +62,8 @@ export default {
       message: "",
       user: null,  // New state to hold authenticated user
       isSignUpMode: false, // Tracks whether in signup mode
+      showLevelModal: false,
+      selectedLevel: null,
     };
   },
   mounted() {
@@ -63,51 +77,85 @@ export default {
     });
   },
   methods: {
-  // Switch between signup and login mode
-  switchMode() {
-    this.isSignUpMode = !this.isSignUpMode;
-    this.message = ''; // Reset the message when switching modes
-  },
-  // Signup function
-  signUp() {
-    if (!this.email || !this.password || !this.username) {
-      this.message = "Please fill in all fields.";
-      return;
-    }
-    createUserWithEmailAndPassword(auth, this.email, this.password)
-      .then((userCredential) => {
-        this.message = `Welcome ${this.email}!`;
-      })
-      .catch((error) => {
+    // Switch between signup and login mode
+    switchMode() {
+      this.isSignUpMode = !this.isSignUpMode;
+      this.message = ''; // Reset the message when switching modes
+    },
+    async addUserToFirestore(userCredential) {
+      try {
+        console.log("before add doc")
+        const userDoc = await addDoc(collection(db, "users"), {
+          expLevel: parseInt(this.selectedLevel),
+          UID: userCredential.user.uid,
+        });
+        console.log("Document created successfully:", userDoc.id);
+        return userDoc
+      } catch (error) {
+        console.error("Error adding document:", error);
+        throw error; // Re-throw to be caught in signUp
+      }
+    },
+    // Signup function
+    async signUp() {
+      if (!this.selectedLevel) {
+        this.showLevelModal = true;
+        this.message = 'Please select a level before creating your account.';
+        return;
+      }
+
+      try {
+        // Create user with email and password
+        const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password);
+        console.log("User Credential:", userCredential);
+
+        // Prepare user data for Firestore
+        const userData = {
+          UID: userCredential.user.uid,
+          expLevel: parseInt(this.selectedLevel) // Ensure expLevel is stored as a number
+        };
+
+        // Add user data to Firestore
+        const userDoc = await addDoc(collection(db, "users"), userData);
+        console.log("Document created successfully:", userDoc.id);
+
+        // Display success message and close the modal
+        this.message = `Welcome ${this.email}! Level selected: ${this.selectedLevel}`;
+        this.showLevelModal = false; // Close modal on successful signup
+      } catch (error) {
+        console.error("Error during signup or Firestore operation:", error);
         this.message = `Firebase: ${error.message}`;
-      });
-  },
-  // Login function
-  login() {
-    if (!this.email || !this.password) {
-      this.message = "Please fill in all fields.";
-      return;
-    }
-    // Log the user in with email and password
-    signInWithEmailAndPassword(auth, this.email, this.password)
-      .then((userCredential) => {
-        this.message = `Welcome back ${this.email}!`;
-      })
-      .catch((error) => {
-        this.message = `Firebase: ${error.message}`;
-      });
-  },
-  // Logout function
-  logout() {
-    signOut(auth)
-      .then(() => {
-        this.message = "You have logged out.";
-      })
-      .catch((error) => {
-        this.message = `Firebase: ${error.message}`;
-      });
-  },
-  handleSubmit() {
+      }
+    },
+    // Login function
+    login() {
+      if (!this.email || !this.password) {
+        this.message = "Please fill in all fields.";
+        return;
+      }
+      // Log the user in with email and password
+      signInWithEmailAndPassword(auth, this.email, this.password)
+        .then((userCredential) => {
+          this.message = `Welcome back ${this.email}!`;
+        })
+        .catch((error) => {
+          this.message = `Firebase: ${error.message}`;
+        });
+    },
+    selectLevel(level) {
+      this.selectedLevel = level;
+    },
+    // Logout function
+    logout() {
+      signOut(auth)
+        .then(() => {
+          this.message = "You have logged out.";
+        })
+        .catch((error) => {
+          this.message = `Firebase: ${error.message}`;
+        });
+    },
+    handleSubmit() {
       // Prevent default form submission
     },
   },
@@ -129,6 +177,19 @@ export default {
   justify-content: center;
   align-items: center;
   background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
+}
+
+.marble-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(2, 53, 90, 0.3);
+  /* Navy blue (#000080) with 60% opacity */
+  z-index: -1;
+  /* Make sure the overlay sits behind other content */
 }
 
 .auth-container {
@@ -160,5 +221,38 @@ p {
 .auth-message {
   color: red;
   margin-top: 10px;
+}
+
+/*Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.modal {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal h3 {
+  margin-bottom: 20px;
+}
+
+.modal button {
+  margin: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
 }
 </style>

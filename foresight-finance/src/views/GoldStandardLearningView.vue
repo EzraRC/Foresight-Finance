@@ -67,7 +67,7 @@
 
 <script>
 import MultiSeriesPieChart from '@/components/MultiSeriesPieChart.vue';
-import { collection, getDocs } from "firebase/firestore";
+import { query, collection, getDocs, orderBy } from "firebase/firestore";
 import { db } from '@/firebase';
 
 export default {
@@ -94,42 +94,52 @@ export default {
     };
   },
   async mounted() {
-    try {
-      // Fetch lessons collection from Firebase
-      const lessonsCollection = collection(db, 'lessons');
-      const lessonSnapshot = await getDocs(lessonsCollection);
+  try {
+    // Fetch lessons collection from Firebase
+    const lessonsCollection = query(collection(db, 'lessons'), orderBy("ID"));
+    const lessonSnapshot = await getDocs(lessonsCollection);
 
-      // Organize lessons by levelNeeded
-      const lessons = lessonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      this.beginnerLessons = lessons.filter(lesson => lesson.levelNeeded === 1);
-      this.intermediateLessons = lessons.filter(lesson => lesson.levelNeeded === 2);
-      this.expertLessons = lessons.filter(lesson => lesson.levelNeeded === 3);
+    // Organize lessons by levelNeeded
+    const lessons = lessonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    this.beginnerLessons = lessons.filter(lesson => lesson.levelNeeded === 1);
+    this.intermediateLessons = lessons.filter(lesson => lesson.levelNeeded === 2);
+    this.expertLessons = lessons.filter(lesson => lesson.levelNeeded === 3);
 
-      console.log("Beginner Lessons:", this.beginnerLessons);
-      console.log("Intermediate Lessons:", this.intermediateLessons);
-      console.log("Expert Lessons:", this.expertLessons);
-    } catch (error) {
-      console.error("Error fetching lessons:", error);
-    }
-
-    // Accordion functionality
-    // Accordion functionality with dynamic height adjustment
-    const acc = document.getElementsByClassName("accordion");
-    for (let i = 0; i < acc.length; i++) {
-      acc[i].addEventListener("click", function () {
-        this.classList.toggle("active");
-        const panel = this.nextElementSibling;
-
-        if (panel.style.maxHeight) {
-          // If the panel is already open, close it
-          panel.style.maxHeight = null;
-        } else {
-          // If the panel is closed, open it and set maxHeight dynamically
-          panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-      });
-    }
+    console.log("Beginner Lessons:", this.beginnerLessons);
+    console.log("Intermediate Lessons:", this.intermediateLessons);
+    console.log("Expert Lessons:", this.expertLessons);
+  } catch (error) {
+    console.error("Error fetching lessons:", error);
   }
+
+  // Accordion functionality
+  const acc = document.getElementsByClassName("accordion");
+  let activePanel = null; // Track the currently active panel
+
+  for (let i = 0; i < acc.length; i++) {
+    acc[i].addEventListener("click", function () {
+      // Close any currently open panel
+      if (activePanel && activePanel !== this.nextElementSibling) {
+        activePanel.style.maxHeight = null;
+        activePanel.previousElementSibling.classList.remove("active");
+      }
+
+      // Toggle the clicked panel
+      this.classList.toggle("active");
+      const panel = this.nextElementSibling;
+
+      if (panel.style.maxHeight) {
+        // If the panel is already open, close it
+        panel.style.maxHeight = null;
+        activePanel = null;
+      } else {
+        // If the panel is closed, open it and set maxHeight dynamically
+        panel.style.maxHeight = panel.scrollHeight + "px";
+        activePanel = panel; // Update the active panel
+      }
+    });
+  }
+}
 };
 </script>
 
@@ -148,15 +158,24 @@ export default {
   background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
 }
 
-/* Split the screen in half */
+.marble-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(2, 53, 90, 0.9); /* Navy blue (#000080) with 60% opacity */
+  z-index: 0; /* Make sure the overlay sits behind other content */
+}
+
 .split {
+  z-index: 1; /* Make sure the content sits above the overlay */
   height: 100%;
   width: 50%;
   position: fixed;
-  z-index: 1;
-
-  overflow-x: hidden;
   padding-top: 20px;
+  overflow-x: hidden;
 }
 
 /* Control the left side */
@@ -185,13 +204,14 @@ export default {
 /* Accordion container */
 .accordion-container {
 
-  padding-top: 35vh;
+  padding-top: 25vh;
   width: 50%;
   max-width: 1000px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   min-width: 400px;
+
 }
 
 /* Accordion button styling */
