@@ -15,17 +15,15 @@
     <!-- Scrolling Content Layer -->
     <div class="scroll-wrapper">
       <div class="centered-content" style="margin-top: 330px;">
-        <h1>An advanced way to get ahead of the ever-changing markets</h1>
-        <p class="description-text" style="margin-top: 400px;">
-          Build and maximize your portfolio with AI-enhanced pattern recognition
-        </p>
-        <div class="button-container" style="margin-top: 700px; margin-left: 625px;">
+        <h1 
+          class="scrolling-text" 
+          :class="{ 'fade-out': scrollPosition > 30 }">
+          An advanced way to get ahead of the ever-changing markets
+        </h1>
+        <div class="button-container scrolling-text" style="margin-top: 700px;">
           <button class="action-button" @click="navigateToAIPR">Discover patterns now!</button>
         </div>
-        <p class="description-text" style="margin-top: 1000px;">
-          We offer a variety of different lessons ranging from beginner topics to advanced technical patterns!
-        </p>
-        <div class="button-container" style="margin-top: 1000px; margin-bottom: 50px;">
+        <div class="button-container scrolling-text" style="margin-top: 1000px; margin-bottom: 50px;">
           <button class="action-button" @click="navigateToLearning">Learn with us!</button>
         </div>
       </div>
@@ -47,6 +45,7 @@ export default {
       isFirstBufferHidden: false,
       loading: true,
       lastUpdate: 0,
+      scrollPosition: 0
     };
   },
   mounted() {
@@ -83,6 +82,7 @@ export default {
       const maxScrollTop = 3000; // Fixed scroll length in pixels
       const scrollFraction = scrollTop / maxScrollTop;
       const index = Math.min(this.images.length - 1, Math.floor(scrollFraction * this.images.length));
+      this.scrollPosition = scrollTop;
 
       const nextImage = this.images[index];
       if (nextImage !== this.getCurrentBufferImage()) {
@@ -148,7 +148,6 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   z-index: -1;
-  opacity: 1;
 }
 
 .zoom-background.hidden {
@@ -209,6 +208,21 @@ body {
   align-items: center;
   height: 100vh;
   color: white;
+}
+
+/* Custom fade-out and fade-in effects */
+.scrolling-text {
+  position: relative;
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.fade-in {
+  opacity: 1;
+  transition: opacity 0.5s ease;
 }
 
 @media (max-width: 768px) {
