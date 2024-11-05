@@ -4,6 +4,7 @@ import GoldStandardLearningView from '../views/GoldStandardLearningView.vue';
 import AIPatternRecognizerView from '../views/AIPatternRecognizerView.vue';
 import LogInSignUpView from '@/views/LogInSignUpView.vue';
 import LearningView from '@/views/LearningView.vue';
+import QuizView from '@/views/QuizView.vue';
 
 const routes = [
   {
@@ -31,7 +32,13 @@ const routes = [
     name: 'LearningView',
     component: LearningView,
     props: true
-  }
+  },
+  {
+    path: '/Quiz/:lessonID',
+    name: 'QuizView',
+    component: QuizView,
+    props: true
+  },
 ];
 
 const router = createRouter({

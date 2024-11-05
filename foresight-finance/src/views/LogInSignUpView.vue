@@ -3,8 +3,9 @@
     <div class="auth-container">
       <!-- If the user is authenticated, show the welcome message and logout button -->
       <div v-if="user">
-        <h2>Welcome, {{ user.email }}!</h2>
-        <button @click="logout">Logout</button>
+        <h2>Welcome, {{ user.displayName || user.username }}!</h2>
+        <router-link to="/AIPR"><button class="">AI Pattern Recognizer</button></router-link>
+        <router-link to="/GSlearning"><button class="">Gold Standard Learning</button></router-link>
       </div>
 
       <!-- If the user is not authenticated -->
@@ -42,6 +43,7 @@
 <script>
 // Import Firebase Auth from firebase.js
 import { auth } from "../firebase.js";
+import { getAuth, updateProfile } from "firebase/auth";
 import { query, collection, getDocs, orderBy, doc, addDoc } from "firebase/firestore";
 import { db } from '@/firebase';
 
@@ -98,16 +100,25 @@ export default {
     },
     // Signup function
     async signUp() {
-      if (!this.selectedLevel) {
+      if (!this.selectedLevel && (this.username && this.password && this.email)) {
         this.showLevelModal = true;
         this.message = 'Please select a level before creating your account.';
+        this.selectedLevel = null;
         return;
       }
 
       try {
         // Create user with email and password
-        const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password);
+        const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password)
         console.log("User Credential:", userCredential);
+        const updateAuth = getAuth();
+        updateProfile(updateAuth.currentUser, {
+          displayName: this.username
+        }).then(() => {
+          console.log("GOOD")
+        }).catch((error) => {
+          console.log("BAD")
+        });
 
         // Prepare user data for Firestore
         const userData = {
@@ -122,9 +133,11 @@ export default {
         // Display success message and close the modal
         this.message = `Welcome ${this.email}! Level selected: ${this.selectedLevel}`;
         this.showLevelModal = false; // Close modal on successful signup
+        this.selectedLevel = null
       } catch (error) {
         console.error("Error during signup or Firestore operation:", error);
         this.message = `Firebase: ${error.message}`;
+        this.showLevelModal = false; // Close modal on successful signup
       }
     },
     // Login function
@@ -144,16 +157,6 @@ export default {
     },
     selectLevel(level) {
       this.selectedLevel = level;
-    },
-    // Logout function
-    logout() {
-      signOut(auth)
-        .then(() => {
-          this.message = "You have logged out.";
-        })
-        .catch((error) => {
-          this.message = `Firebase: ${error.message}`;
-        });
     },
     handleSubmit() {
       // Prevent default form submission

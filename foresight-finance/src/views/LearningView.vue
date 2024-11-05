@@ -6,11 +6,16 @@
     </div>
 
     <!-- Show the actual content after loading is done -->
-    <div v-else-if="isAuthorized" class="marble-background">
-        <div class="content-container">
-            <h1 class="video-title">Lesson {{ lessonTitle }}</h1>
-            <div class="iframe-container">
-                <div v-html="videoUrl"></div> <!-- This will insert the iframe dynamically -->
+    <div v-else-if="isAuthorized">
+        <div class="marble-background">
+            <div class="content-container">
+                <h1 class="video-title">Lesson {{ lessonTitle }}</h1>
+                <div class="iframe-container">
+                    <div v-html="videoUrl"></div> <!-- This will insert the iframe dynamically -->
+                </div>
+                <div class="quizButton-container">
+                    <router-link :to="{ name: 'QuizView', params: { lessonID: this.lessonId } }"><button>Ready to take the quiz?</button></router-link>
+                </div>
             </div>
         </div>
     </div>
@@ -112,7 +117,7 @@ body {
     width: 100%;
     height: 100%;
     padding: 20px;
-    margin-top: -20vh;
+    margin-top: -10vh;
 }
 
 .video-title {
@@ -146,6 +151,19 @@ body {
 
 h1 {
     text-align: center;
+}
+
+.quizButton-container {
+    display: flex;
+    justify-content: center; /* Centers the button horizontally */
+    margin-top: 20px; /* Add space above the button */
+    z-index: 1; /* Ensures the button appears above the background */
+}
+
+.quizButton-container button {
+    padding: 10px 20px; /* Adjust padding as needed */
+    font-size: 16px; /* Font size for the button */
+    cursor: pointer; /* Show pointer cursor on hover */
 }
 
 
