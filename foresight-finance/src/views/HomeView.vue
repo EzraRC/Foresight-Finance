@@ -15,17 +15,24 @@
     <!-- Scrolling Content Layer -->
     <div class="scroll-wrapper">
       <div class="centered-content" style="margin-top: 330px;">
-        <h1>An advanced way to get ahead of the ever-changing markets</h1>
-        <p class="description-text" style="margin-top: 400px;">
-          Build and maximize your portfolio with AI-enhanced pattern recognition
-        </p>
-        <div class="button-container" style="margin-top: 700px; margin-left: 625px;">
-          <button class="action-button" @click="navigateToAIPR">Discover patterns now!</button>
+        <!-- Heading with fade-out effect at scrollPosition > 30 -->
+        <h1 
+          class="scrolling-text" 
+          :class="{ 'fade-out': scrollPosition > 30 }">
+          An advanced way to get ahead of the ever-changing markets
+        </h1>
+
+        <!-- Button with fade-out effect at scrollPosition > 1900 -->
+        <div class="button-container scrolling-text" style="margin-top: 1800px; margin-left: 600px;">
+          <button 
+            class="action-button" 
+            @click="navigateToAIPR"
+            :class="{ 'fade-out': scrollPosition > 1650 }">
+            Discover patterns now!
+          </button>
         </div>
-        <p class="description-text" style="margin-top: 1000px;">
-          We offer a variety of different lessons ranging from beginner topics to advanced technical patterns!
-        </p>
-        <div class="button-container" style="margin-top: 1000px; margin-bottom: 50px;">
+
+        <div class="button-container scrolling-text" style="margin-top: 2000px; margin-bottom: 50px; margin-left: -1300px;">
           <button class="action-button" @click="navigateToLearning">Learn with us!</button>
         </div>
       </div>
@@ -47,24 +54,28 @@ export default {
       isFirstBufferHidden: false,
       loading: true,
       lastUpdate: 0,
+      scrollPosition: 0
     };
   },
   mounted() {
     this.loading = false;
 
-    this.images = Array.from({ length: 249 }, (_, index) =>
+    // Load images into the images array
+    this.images = Array.from({ length: 999 }, (_, index) =>
       require(`@/assets/3d-models/homePage/${String(index + 2).padStart(4, '0')}.jpg`)
     );
 
+    // Preload the images and set the initial buffer images
     this.preloadImages().then(() => {
       this.firstBufferImage = this.images[0];
       this.secondBufferImage = this.images[1];
     });
 
-    window.addEventListener('scroll', this.debouncedScroll);
+    // Set up the scroll event listener
+    window.addEventListener('scroll', this.handleScroll);
   },
   beforeDestroy() {
-    window.removeEventListener('scroll', this.debouncedScroll);
+    window.removeEventListener('scroll', this.handleScroll);
   },
   methods: {
     preloadImages() {
@@ -79,10 +90,12 @@ export default {
       );
     },
     handleScroll() {
-      const scrollTop = document.documentElement.scrollTop;
-      const maxScrollTop = 3000; // Fixed scroll length in pixels
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const maxScrollTop = 4000; // Define maximum scroll height
       const scrollFraction = scrollTop / maxScrollTop;
       const index = Math.min(this.images.length - 1, Math.floor(scrollFraction * this.images.length));
+
+      this.scrollPosition = scrollTop;
 
       const nextImage = this.images[index];
       if (nextImage !== this.getCurrentBufferImage()) {
@@ -103,13 +116,6 @@ export default {
     },
     getCurrentBufferImage() {
       return this.isFirstBufferHidden ? this.secondBufferImage : this.firstBufferImage;
-    },
-    debouncedScroll() {
-      const now = Date.now();
-      if (now - this.lastUpdate > 20) {
-        this.handleScroll();
-        this.lastUpdate = now;
-      }
     },
     navigateToAIPR() {
       this.$router.push('/AIPR');
@@ -134,7 +140,7 @@ body {
 }
 
 .scroll-wrapper {
-  height: 3000px; /* Fixed scroll height */
+  height: 4000px; /* Fixed scroll height */
 }
 
 .zoom-background {
@@ -148,7 +154,6 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   z-index: -1;
-  opacity: 1;
 }
 
 .zoom-background.hidden {
@@ -209,6 +214,12 @@ body {
   align-items: center;
   height: 100vh;
   color: white;
+}
+
+/* Custom fade-out effect */
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.5s ease;
 }
 
 @media (max-width: 768px) {
