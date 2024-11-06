@@ -42,7 +42,7 @@ def generate_chart():
     # Create a candlestick chart
     try:
         fig = go.Figure(data=[go.Candlestick(
-            x=data.index,  # Use the actual datetime index here
+            x=data.index.strftime('%m/%d\n%H:%M'),  # Format datetime index here
             open=data['Open'],
             high=data['High'],
             low=data['Low'],
@@ -91,13 +91,13 @@ def generate_chart():
                 end_idx = int(end_idx)
                 midpoint = int((start_idx + end_idx) // 2)
 
-                # Use the actual datetime index and close price from data
-                midpoint_date = data.index[midpoint]
+                # Use formatted datetime for markers
+                midpoint_date = data.index[midpoint].strftime('%m/%d\n%H:%M')
                 midpoint_price = data['Close'].iloc[midpoint]
 
                 # Add marker for the pattern midpoint
                 fig.add_trace(go.Scatter(
-                    x=[midpoint_date],  # Use actual datetime for x
+                    x=[midpoint_date],  # Use formatted datetime for x
                     y=[midpoint_price],  # Use actual close price for y
                     mode='markers',
                     marker=dict(
@@ -109,15 +109,15 @@ def generate_chart():
                 ))
 
                 # Add bounding boxes for the patterns
-                start_date = data.index[start_idx]
-                end_date = data.index[end_idx]
+                start_date = data.index[start_idx].strftime('%m/%d\n%H:%M')
+                end_date = data.index[end_idx].strftime('%m/%d\n%H:%M')
                 min_price = data['Low'].iloc[start_idx:end_idx + 1].min()
                 max_price = data['High'].iloc[start_idx:end_idx + 1].max()
 
                 fig.add_shape(
                     type="rect",
-                    x0=start_date,  # Use actual datetime for bounding box
-                    x1=end_date,    # Use actual datetime for bounding box
+                    x0=start_date,  # Use formatted datetime for bounding box
+                    x1=end_date,    # Use formatted datetime for bounding box
                     y0=min_price,
                     y1=max_price,
                     line=dict(
@@ -132,6 +132,7 @@ def generate_chart():
 
     except Exception as e:
         print(f"Error creating chart: {e}")  # Log any errors during chart creation
+
 
 
 
