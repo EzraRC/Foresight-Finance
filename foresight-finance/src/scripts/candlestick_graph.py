@@ -7,7 +7,6 @@ from flask_cors import CORS
 import numpy as np
 import patterns as pr
 
-
 app = Flask(__name__)
 CORS(app)
 
@@ -34,24 +33,28 @@ def generate_chart():
     # Filter data to include only trading hours
     data = filter_trading_hours(data)
 
-    df = data.reset_index() #Reset index of stock data for the recognition
-    df, prices, dates = df, df['Close'], df['Datetime'] #Seperatingit for easier use
+    df = data.reset_index()  # Reset index of stock data for the recognition
+    df, prices, dates = df, df['Close'], df['Datetime']  # Separate for easier use
 
     print("Indexing")
-    prices.index = np.linspace(1, len(prices), len(prices)) #set the index from 1 for Nadaraya-Watson kernel regression
+    prices.index = np.linspace(1, len(prices), len(prices))  # Set index from 1 for kernel regression
     dates.index = np.linspace(1, len(dates), len(dates))
 
     print("find max min")
-    smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
-    price_max_indices, price_min_indices, max_min, max_min_types = pr.find_max_min(prices) #FInd max and min of prices to smooth it
-    
-    print("patterns")
-    patterns = pr.find_patterns(max_min, max_min_types) #Find Patterns
+    try:
+        smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
+        price_max_indices, price_min_indices, max_min, max_min_types = pr.find_max_min(prices)  # Find max and min prices
+        print("patterns")
+        patterns = pr.find_patterns(max_min, max_min_types)  # Find patterns
+
+    except Exception as e:
+        print(f"Error in pattern recognition: {e}")  # Log any errors in pattern recognition
+        patterns = {}  # Set patterns to an empty dictionary if an error occurs
 
     # Create a candlestick chart
     try:
         fig = go.Figure(data=[go.Candlestick(
-            x=data.index.strftime('%m/%d\n%H:%M'),
+            x=data.index.strftime('%m/%d\n%H:%M'),  # Format datetime index here
             open=data['Open'],
             high=data['High'],
             low=data['Low'],
@@ -74,7 +77,7 @@ def generate_chart():
             ),
             yaxis=dict(showgrid=True, gridcolor='lightgray'),
             margin=dict(l=10, r=10, t=10, b=10),
-            title=f"Candlestick Chart with Patterns for {ticker}",
+            #title=f"Candlestick Chart with Patterns for {ticker}",
         )
 
         # Define marker styles and colors for each pattern type
@@ -87,18 +90,27 @@ def generate_chart():
             'TBOT': {'symbol': 'diamond', 'color': 'lime'},
             'RTOP': {'symbol': 'pentagon', 'color': 'brown'},
             'RBOT': {'symbol': 'triangle-down', 'color': 'black'},
-            'PN': {'symbol': 'hexagon', 'color': 'blue'}
+            'PN': {'symbol': 'hexagon', 'color': 'blue'},
+            'DTRI': {'symbol': 'hexagon', 'color': 'black'},
+            'ATRI': {'symbol': 'hexagon', 'color': 'blue'}
         }
 
         # Loop through each pattern to add markers and bounding boxes
         for pattern_name, pattern_instances in patterns.items():
             for start_idx, end_idx in pattern_instances:
-                midpoint = (start_idx + end_idx) // 2
+                # Ensure indices are integers
+                start_idx = int(start_idx)
+                end_idx = int(end_idx)
+                midpoint = int((start_idx + end_idx) // 2)
+
+                # Use formatted datetime for markers
+                midpoint_date = data.index[midpoint].strftime('%m/%d\n%H:%M')
+                midpoint_price = data['Close'].iloc[midpoint]
 
                 # Add marker for the pattern midpoint
                 fig.add_trace(go.Scatter(
-                    x=[data.index[midpoint]],
-                    y=[data['Close'].iloc[midpoint]],
+                    x=[midpoint_date],  # Use formatted datetime for x
+                    y=[midpoint_price],  # Use actual close price for y
                     mode='markers',
                     marker=dict(
                         symbol=marker_styles[pattern_name]['symbol'],
@@ -109,15 +121,15 @@ def generate_chart():
                 ))
 
                 # Add bounding boxes for the patterns
-                start_date = data.index[start_idx]
-                end_date = data.index[end_idx]
+                start_date = data.index[start_idx].strftime('%m/%d\n%H:%M')
+                end_date = data.index[end_idx].strftime('%m/%d\n%H:%M')
                 min_price = data['Low'].iloc[start_idx:end_idx + 1].min()
                 max_price = data['High'].iloc[start_idx:end_idx + 1].max()
 
                 fig.add_shape(
                     type="rect",
-                    x0=start_date,
-                    x1=end_date,
+                    x0=start_date,  # Use formatted datetime for bounding box
+                    x1=end_date,    # Use formatted datetime for bounding box
                     y0=min_price,
                     y1=max_price,
                     line=dict(
@@ -130,11 +142,9 @@ def generate_chart():
 
         # Save the chart as an HTML file
         output_directory = os.path.dirname(os.path.abspath(__file__))
-        output_file = os.path.join(output_directory, "candlestick_chart_with_patterns.html")
+        output_file = os.path.join(output_directory, "candlestick_chart.html")
         fig.write_html(output_file)
         print(f"Chart for {ticker} saved to: {output_file}")
-
-        fig.show()
 
     except Exception as e:
         print(f"Error creating chart: {e}")  # Log any errors during chart creation
@@ -143,7 +153,7 @@ def generate_chart():
     # Get additional stock information
     try:
         info = yf.Ticker(ticker).info
-        
+
         # Calculate total volume
         volume = f"{data['Volume'].sum():,}"
 
@@ -201,7 +211,6 @@ def serve_stock_data():
 # Function to filter data based on trading hours (9:30 AM to 4:00 PM, Monday to Friday)
 def filter_trading_hours(df):
     # Filter out weekends (Monday=0, Sunday=6)
-    
     df = df[df.index.weekday < 5]
     
     # Filter out times outside of trading hours (9:30 AM to 4:00 PM)
