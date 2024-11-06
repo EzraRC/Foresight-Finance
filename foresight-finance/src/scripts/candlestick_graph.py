@@ -137,7 +137,7 @@ def generate_chart():
                         width=2
                     ),
                     fillcolor=marker_styles[pattern_name]['color'],
-                    opacity=0.2,
+                    opacity=0.5,
                 )
 
         # Save the chart as an HTML file
@@ -146,6 +146,8 @@ def generate_chart():
         fig.write_html(output_file)
         print(f"Chart for {ticker} saved to: {output_file}")
 
+        #fig.show()
+        
     except Exception as e:
         print(f"Error creating chart: {e}")  # Log any errors during chart creation
         return jsonify({"success": False, "message": "Error creating chart."}), 500

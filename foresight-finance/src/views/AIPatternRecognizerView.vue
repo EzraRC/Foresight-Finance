@@ -75,7 +75,7 @@ export default {
       chartUrl: this.getChartUrl(''),
       loading: false,
       refreshing: false,
-      countdown: 120,
+      countdown: 200,
       refreshInterval: null,
       countdownInterval: null,
       isModalOpen: false,
@@ -171,13 +171,13 @@ export default {
       this.refreshing = true;
       this.refreshInterval = setInterval(() => {
         this.updateChart();
-      }, 120000);
+      }, 200000);
 
-      this.countdown = 120;
+      this.countdown = 200;
       this.countdownInterval = setInterval(() => {
         this.countdown -= 1;
         if (this.countdown <= 0) {
-          this.countdown = 120;
+          this.countdown = 200;
         }
       }, 1000);
     },
