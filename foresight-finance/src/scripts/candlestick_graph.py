@@ -75,7 +75,12 @@ def generate_chart():
                 ticks="outside",
                 ticklen=8,
             ),
-            yaxis=dict(showgrid=True, gridcolor='lightgray'),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor='lightgray',
+                autorange=True,          # Enable dynamic adjustment of y-axis range
+                rangemode='normal',      # Set to 'tozero' if you want the y-axis to start at zero
+            ),
             margin=dict(l=10, r=10, t=10, b=10),
             #title=f"Candlestick Chart with Patterns for {ticker}",
         )
@@ -89,10 +94,10 @@ def generate_chart():
             'TTOP': {'symbol': 'x', 'color': 'magenta'},
             'TBOT': {'symbol': 'diamond', 'color': 'lime'},
             'RTOP': {'symbol': 'pentagon', 'color': 'brown'},
-            'RBOT': {'symbol': 'triangle-down', 'color': 'black'},
+            'RBOT': {'symbol': 'triangle-down', 'color': 'white'},
             'PN': {'symbol': 'hexagon', 'color': 'blue'},
-            'DTRI': {'symbol': 'hexagon', 'color': 'black'},
-            'ATRI': {'symbol': 'hexagon', 'color': 'blue'}
+            'DTRI': {'symbol': 'hexagon', 'color': 'purple'},
+            'ATRI': {'symbol': 'hexagon', 'color': 'yellow'}
         }
 
         # Loop through each pattern to add markers and bounding boxes
