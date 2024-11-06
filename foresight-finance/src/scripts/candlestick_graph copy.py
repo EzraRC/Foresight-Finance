@@ -68,7 +68,6 @@ def generate_chart():
             title=f"Candlestick Chart with Patterns for {ticker}",
         )
 
-
         # Define marker styles and colors for each pattern type
         marker_styles = {
             'HS': {'symbol': 'circle', 'color': 'cyan'},
@@ -92,10 +91,14 @@ def generate_chart():
                 end_idx = int(end_idx)
                 midpoint = int((start_idx + end_idx) // 2)
 
+                # Use actual date from data index for x-coordinate
+                midpoint_date = data.index[midpoint]
+                midpoint_price = data['Close'].iloc[midpoint]
+
                 # Add marker for the pattern midpoint
                 fig.add_trace(go.Scatter(
-                    x=[prices.loc[midpoint]],
-                    y=[data['Close'].iloc[midpoint]],
+                    x=[midpoint_date],  # Use the date here
+                    y=[midpoint_price],  # Use the actual close price at midpoint
                     mode='markers',
                     marker=dict(
                         symbol=marker_styles[pattern_name]['symbol'],
@@ -124,10 +127,12 @@ def generate_chart():
                     fillcolor=marker_styles[pattern_name]['color'],
                     opacity=0.2,
                 )
+
         fig.show()
 
     except Exception as e:
         print(f"Error creating chart: {e}")  # Log any errors during chart creation
+
 
     
 
