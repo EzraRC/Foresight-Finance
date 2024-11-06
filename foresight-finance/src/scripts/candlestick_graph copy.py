@@ -6,6 +6,7 @@ from datetime import datetime
 from flask_cors import CORS
 import numpy as np
 import patterns as pr
+import pdb
 
 
 def generate_chart():
@@ -36,6 +37,7 @@ def generate_chart():
     
     print("patterns")
     patterns = pr.find_patterns(max_min, max_min_types) #Find Patterns
+    #pdb.set_trace()
 
     # Create a candlestick chart
     try:
@@ -92,7 +94,7 @@ def generate_chart():
 
                 # Add marker for the pattern midpoint
                 fig.add_trace(go.Scatter(
-                    x=[data.index[midpoint]],
+                    x=[prices.loc[midpoint]],
                     y=[data['Close'].iloc[midpoint]],
                     mode='markers',
                     marker=dict(
