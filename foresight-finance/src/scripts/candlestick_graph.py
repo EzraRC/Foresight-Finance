@@ -64,7 +64,7 @@ def generate_chart():
         # Update layout for dark mode and aesthetics
         fig.update_layout(
             plot_bgcolor='black',
-            paper_bgcolor='rgba(32, 52, 68, 1.0)',
+            paper_bgcolor='#183243',
             font_color='white',
             xaxis=dict(
                 showgrid=True,

@@ -5,7 +5,7 @@
     
     <!-- Loading indicator -->
     <div v-if="loading" class="loading-indicator">
-      Loading...
+      <img :src="require('@/assets/3d-models/gif-animations/loading.gif')" alt="Loading..." />
     </div>
 
     <!-- Container for search bar and stock info -->
@@ -202,7 +202,7 @@ export default {
   computed: {
     containerStyle() {
       return {
-        backgroundColor: 'rgba(32, 52, 68, 1.0)',
+        backgroundColor: '#183243',
         padding: '30px',
         borderRadius: '10px',
         position: 'relative',
