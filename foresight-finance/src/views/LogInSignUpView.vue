@@ -168,7 +168,6 @@ export default {
 <style>
 .marble-background {
   position: fixed;
-  margin-top: 9.5vh;
   top: 0;
   left: 0;
   width: 100%;
@@ -179,6 +178,8 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1;
+  /* Set a base z-index */
   background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
 }
 
@@ -190,12 +191,16 @@ export default {
   width: 100%;
   height: 100%;
   background-color: rgba(2, 53, 90, 0.3);
-  /* Navy blue (#000080) with 60% opacity */
-  z-index: -1;
-  /* Make sure the overlay sits behind other content */
+  /* Navy blue with opacity */
+  z-index: 0;
+  /* Ensure the overlay is below the auth container */
 }
 
 .auth-container {
+  position: relative;
+  /* Make z-index effective */
+  z-index: 2;
+  /* Position above the marble background and its overlay */
   background-color: rgba(255, 255, 255, 0.8);
   padding: 20px;
   border-radius: 8px;
@@ -226,7 +231,7 @@ p {
   margin-top: 10px;
 }
 
-/*Modal styles */
+/* Modal styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -237,10 +242,13 @@ p {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2;
+  z-index: 3;
+  /* Ensure the modal is above all other content */
 }
 
 .modal {
+  position: relative;
+  /* Optional: if you need to position modal content */
   background-color: #fff;
   padding: 20px;
   border-radius: 8px;

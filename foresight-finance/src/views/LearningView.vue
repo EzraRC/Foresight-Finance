@@ -14,16 +14,22 @@
                     <div v-html="videoUrl"></div> <!-- This will insert the iframe dynamically -->
                 </div>
                 <div class="quizButton-container">
-                    <router-link :to="{ name: 'QuizView', params: { lessonID: this.lessonId } }"><button>Ready to take the quiz?</button></router-link>
+                    <router-link :to="{ name: 'QuizView', params: { lessonID: this.lessonId } }"><button>Ready to take
+                            the quiz?</button></router-link>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Show "Not Authorized" page if user is not logged in -->
-    <div v-else class="not-auth">
-        <h1>Not Authorized</h1>
-        <p>Please log in to access this page.</p>
+    <div v-else class="not-authorized">
+        <div class="not-authorized-container">
+            <h1 class="animated-text">Error 403: Access Denied :(</h1>
+            <p>You don’t have permission to access this page. <br><br>Please log in or create an account with us</p>
+            <router-link to="/LogInSignUp">
+                <button class="login-button">Go to Login</button>
+            </router-link>
+        </div>
     </div>
 </template>
 
@@ -155,15 +161,21 @@ h1 {
 
 .quizButton-container {
     display: flex;
-    justify-content: center; /* Centers the button horizontally */
-    margin-top: 20px; /* Add space above the button */
-    z-index: 1; /* Ensures the button appears above the background */
+    justify-content: center;
+    /* Centers the button horizontally */
+    margin-top: 20px;
+    /* Add space above the button */
+    z-index: 1;
+    /* Ensures the button appears above the background */
 }
 
 .quizButton-container button {
-    padding: 10px 20px; /* Adjust padding as needed */
-    font-size: 16px; /* Font size for the button */
-    cursor: pointer; /* Show pointer cursor on hover */
+    padding: 10px 20px;
+    /* Adjust padding as needed */
+    font-size: 16px;
+    /* Font size for the button */
+    cursor: pointer;
+    /* Show pointer cursor on hover */
 }
 
 
@@ -188,22 +200,93 @@ h1 {
 }
 
 /* Loading Screen Styles */
-.not-auth {
+.not-authorized {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
     height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color: #f5f5f5;
-    color: #333;
+    background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
 }
 
-.not-auth h1 {
-    font-size: 32px;
+.not-authorized-container {
+    background-color: rgba(2, 53, 90, 0.95);
+    padding: 75px;
+    text-align: center;
+}
+
+.not-authorized-container p {
+    font-size: 1.2rem;
     margin-bottom: 20px;
+    animation: fadeInSlideUp 1s ease-in-out;
+    color: white;
+    cursor: default;
 }
 
-.not-auth p {
-    font-size: 18px;
+.animated-text {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    animation: fadeInSlideUp 1s ease-in-out;
+    color: white;
+
+}
+
+
+
+.login-button {
+    background-color: #e3b130;
+    border: none;
+    outline: none;
+    color: black !important;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 18px;
+    cursor: pointer;
+    scale: 1.5;
+}
+
+.login-button:hover {
+    scale: 1.55;
+    background: linear-gradient(90deg, rgba(186, 148, 62, 1) 0%, rgba(236, 172, 32, 1) 20%, rgba(186, 148, 62, 1) 39%, rgba(249, 244, 180, 1) 50%, rgba(186, 148, 62, 1) 60%, rgba(236, 172, 32, 1) 80%, rgba(186, 148, 62, 1) 100%);
+    color: black;
+    /* Ensure text stays black on hover */
+    -webkit-text-fill-color: black;
+    /* For WebKit browsers */
+    animation: shine 2s infinite ease-in-out;
+    background-size: 200%;
+    background-position: left;
+}
+
+@keyframes fadeInSlideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+@keyframes shine {
+    from {
+        background-position: -20%;
+    }
+
+    to {
+        background-position: 120%
+    }
+
 }
 </style>
