@@ -86,12 +86,12 @@ export default {
     },
     async addUserToFirestore(userCredential) {
       try {
-        console.log("before add doc")
+        
         const userDoc = await addDoc(collection(db, "users"), {
           expLevel: parseInt(this.selectedLevel),
           UID: userCredential.user.uid,
         });
-        console.log("Document created successfully:", userDoc.id);
+        
         return userDoc
       } catch (error) {
         console.error("Error adding document:", error);
@@ -110,14 +110,13 @@ export default {
       try {
         // Create user with email and password
         const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password)
-        console.log("User Credential:", userCredential);
         const updateAuth = getAuth();
         updateProfile(updateAuth.currentUser, {
           displayName: this.username
         }).then(() => {
-          console.log("GOOD")
+          //console.log("GOOD")
         }).catch((error) => {
-          console.log("BAD")
+          //console.log("BAD")
         });
 
         // Prepare user data for Firestore
@@ -128,7 +127,7 @@ export default {
 
         // Add user data to Firestore
         const userDoc = await addDoc(collection(db, "users"), userData);
-        console.log("Document created successfully:", userDoc.id);
+        //console.log("Document created successfully:", userDoc.id);
 
         // Display success message and close the modal
         this.message = `Welcome ${this.email}! Level selected: ${this.selectedLevel}`;

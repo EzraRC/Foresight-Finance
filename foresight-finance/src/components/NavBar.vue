@@ -86,13 +86,9 @@ export default {
     // Listen for authentication state changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
-
-        console.log("USER IN NAVBAR", user)
         this.username = user.displayName; // Use display name or fallback to email
         this.email = user.email
-        console.log(this.email, this.username)
         this.isAuthenticated = true;
-
         this.setGreeting(); // Set greeting based on time of day
       } else {
         this.isAuthenticated = false;
