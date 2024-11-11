@@ -64,7 +64,7 @@ def generate_chart():
         # Update layout for dark mode and aesthetics
         fig.update_layout(
             plot_bgcolor='black',
-            paper_bgcolor='rgba(32, 52, 68, 1.0)',
+            paper_bgcolor='#183243',
             font_color='white',
             xaxis=dict(
                 showgrid=True,
@@ -214,6 +214,15 @@ def serve_stock_data():
         return send_from_directory('static', 'stock_data.txt')
     except Exception as e:
         return jsonify({"success": False, "message": "File not found."}), 404
+    
+# Route to serve the acronym_key.txt file
+@app.route('/src/static/acronym_key.txt', methods=['GET'])
+def serve_acronym_key():
+    try:
+        return send_from_directory('static', 'acronym_key.txt')
+    except Exception as e:
+        return jsonify({"success": False, "message": "Acronym key file not found."}), 404
+
 
 # Function to filter data based on trading hours (9:30 AM to 4:00 PM, Monday to Friday)
 def filter_trading_hours(df):

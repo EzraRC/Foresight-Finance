@@ -5,7 +5,7 @@
     
     <!-- Loading indicator -->
     <div v-if="loading" class="loading-indicator">
-      Loading...
+      <img :src="require('@/assets/3d-models/gif-animations/loading.gif')" alt="Loading..." />
     </div>
 
     <!-- Container for search bar and stock info -->
@@ -18,15 +18,53 @@
           @keyup.enter="updateChart"
           placeholder="Enter stock ticker"
         />
-        <button @click="updateChart">Search</button>
+        
+        <!-- Search button -->
+        <button class="search-button" @click="updateChart">
+          <span>🔍</span>
+        </button>
 
         <!-- Hyperlink to open modal with stock symbols -->
         <a href="javascript:void(0)" @click="openModal" class="trending-link">Click here for a list of stock symbols!</a>
+
+        <!-- Hyperlink to open key with pattern explanation -->
+        <a href="javascript:void(0)" @click="openAcronymModal" class="trending-link">
+          Need help with the patterns? Click here!
+        </a>
+
+        <!-- Modal for displaying acronyms and their explanations -->
+        <div v-if="isAcronymModalOpen" class="modal-overlay" @click.self="closeAcronymModal">
+          <div class="modal-content">
+            <!-- Title for the modal, centered and fixed -->
+            <h2>Pattern Explanations</h2>
+
+            <!-- Scrollable list of acronyms and descriptions -->
+            <div class="acronym-list-container">
+              <ul>
+                <li v-for="(acronym, index) in acronymList" :key="index" class="acronym-item">
+                  <!-- Pattern term with color -->
+                  <p>
+                    <span class="acronym-term" :style="{ color: acronym.color.toLowerCase() }">
+                      <strong>{{ acronym.term }}</strong> - {{ acronym.color }}
+                    </span>:
+                  </p>
+                  <!-- Description text in white -->
+                  <p class="acronym-description">{{ acronym.description }}</p>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Close button fixed at the bottom -->
+            <button @click="closeModal">Close</button>
+          </div>
+        </div>
+
+
       </div>
 
       <!-- Stock information -->
       <div class="stock-info">
-        <div style="display: grid; grid-template-columns: repeat(4, 2fr); gap: 10px; margin-left: -400px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 2fr); gap: 10px; column-gap: 150px; margin-left: 10px;">
           <p style="color: white;">Symbol: <span>{{ stockCode }}</span></p>
           <p style="color: white;">Company Name: <span>{{ stockName }}</span></p>
           <p style="color: white;">Current Price: <span>{{ currentPrice }}</span></p>
@@ -81,12 +119,58 @@ export default {
       isModalOpen: false,
       stockData: '', // Holds stock data from the file
       stockSymbols: [],
+      acronymKey: '', // Holds the content of the acronym key file
+      isAcronymModalOpen: false, // Controls the acronym key modal
     };
   },
   created() {
     this.fetchStockSymbols(); // Fetch symbols when component is created
   },
-  methods: {
+  methods: {  
+    async fetchAcronymKey() {
+  try {
+    const response = await fetch('http://127.0.0.1:5000/src/static/acronym_key.txt');
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const data = await response.text();
+
+    console.log('Raw fetched data:', data); // Debugging output
+
+    this.acronymList = data
+      .split('+') // Split entries by the '+' delimiter
+      .map(entry => {
+        const cleanedEntry = entry.trim();
+        if (!cleanedEntry) return null; // Skip empty entries
+
+        // Split each entry into term-color and description
+        const [termColor, description] = cleanedEntry.split(': ');
+        if (!termColor || !description) {
+          console.error('Parsing failed for entry:', cleanedEntry);
+          return null;
+        }
+
+        // Split the termColor part into term and color
+        const [term, color] = termColor.split(' - ');
+        return {
+          term: term?.trim() || 'Unknown',
+          color: color?.trim() || 'Unknown',
+          description: description.trim()
+        };
+      })
+      .filter(entry => entry); // Remove null or invalid entries
+
+    console.log('Parsed acronym list:', this.acronymList); // Debugging output
+    this.isAcronymModalOpen = true; // Open modal on successful fetch
+  } catch (error) {
+    console.error('Error fetching acronym key:', error);
+  }
+},
+
+  openAcronymModal() {
+    this.isAcronymModalOpen = true;
+    this.fetchAcronymKey();
+  },
+
   async fetchStockSymbols() {
     try {
       const response = await fetch('http://127.0.0.1:5000/src/static/stock_data.txt');
@@ -165,7 +249,7 @@ export default {
       this.isModalOpen = true; // Open modal without fetching from a file
     },
     closeModal() {
-      this.isModalOpen = false;
+      this.isModalOpen = this.isAcronymModalOpen = false;
     },
     startAutoRefresh() {
       this.refreshing = true;
@@ -202,7 +286,7 @@ export default {
   computed: {
     containerStyle() {
       return {
-        backgroundColor: 'rgba(32, 52, 68, 1.0)',
+        backgroundColor: '#183243',
         padding: '30px',
         borderRadius: '10px',
         position: 'relative',
@@ -227,27 +311,34 @@ iframe {
 
 .search-info-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   margin-top: 20px;
 }
 
 .search-bar {
-  flex: 1;
-  margin-right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .search-bar input {
   padding: 10px;
   font-size: 16px;
-  width: 200px;
-  margin-right: 10px;
+  width: 150px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 .search-bar button {
   padding: 10px 20px;
   font-size: 16px;
+  background-color: #f9c802;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.3s;
+
 }
 
 .trending-link {
@@ -290,13 +381,14 @@ iframe {
 
 .refresh-timer {
   position: absolute;
+  height: 55px;
   bottom: 20px;
   right: 20px;
   background-color: rgba(0, 0, 0, 0.5);
   padding: 10px;
   color: white;
   font-size: 15px;
-  margin-bottom: -15px;
+  margin-bottom: 90px;
 }
 
 /* List styles */
@@ -318,7 +410,6 @@ iframe {
   padding: 20px;
   border-radius: 8px;
   width: 400px;
-  max-width: 90%;
   text-align: center;
   margin: auto;   /* Center modal */
 }
@@ -338,5 +429,54 @@ iframe {
 .modal-content button {
   margin-top: 10px;
   padding: 10px;
+}
+
+/* Scrollable container for acronyms and descriptions */
+.acronym-list-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  max-width: 1000px;
+}
+
+/* Styling for each acronym entry */
+.acronym-item {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #333;
+  border-radius: 5px;
+  background-color: #222;
+  max-width: 500px;
+}
+
+/* Styling for the pattern term (e.g., 'HS (Head and Shoulders) - Cyan') */
+.acronym-term {
+  font-weight: bold;
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+/* Styling for the description text */
+.acronym-description {
+  color: white;
+  font-size: 1em;
+  line-height: 1.5;
+}
+
+/* Close button */
+button {
+  background-color: #000000;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  align-self: center;
+  margin-top: 10px;
+}
+
+/* Button hover effect */
+button:hover {
+  background-color: #666;
 }
 </style>
