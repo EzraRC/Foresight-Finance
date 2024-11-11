@@ -18,15 +18,22 @@
           @keyup.enter="updateChart"
           placeholder="Enter stock ticker"
         />
-        <button @click="updateChart">Search</button>
+        
+        <!-- Search button -->
+        <button class="search-button" @click="updateChart">
+          <span>🔍</span>
+        </button>
 
         <!-- Hyperlink to open modal with stock symbols -->
         <a href="javascript:void(0)" @click="openModal" class="trending-link">Click here for a list of stock symbols!</a>
+
+        <!-- Hyperlink to open key with pattern explanation -->
+        <a href="javascript:void(0)" @click="openModal" class="trending-link">Need help with the patterns? Click here!</a>
       </div>
 
       <!-- Stock information -->
       <div class="stock-info">
-        <div style="display: grid; grid-template-columns: repeat(4, 2fr); gap: 10px; margin-left: -400px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 2fr); gap: 10px; column-gap: 150px; margin-left: 10px;">
           <p style="color: white;">Symbol: <span>{{ stockCode }}</span></p>
           <p style="color: white;">Company Name: <span>{{ stockName }}</span></p>
           <p style="color: white;">Current Price: <span>{{ currentPrice }}</span></p>
@@ -227,27 +234,34 @@ iframe {
 
 .search-info-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   margin-top: 20px;
 }
 
 .search-bar {
-  flex: 1;
-  margin-right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .search-bar input {
   padding: 10px;
   font-size: 16px;
-  width: 200px;
-  margin-right: 10px;
+  width: 150px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 .search-bar button {
   padding: 10px 20px;
   font-size: 16px;
+  background-color: #f9c802;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.3s;
+
 }
 
 .trending-link {
@@ -290,13 +304,14 @@ iframe {
 
 .refresh-timer {
   position: absolute;
+  height: 55px;
   bottom: 20px;
   right: 20px;
   background-color: rgba(0, 0, 0, 0.5);
   padding: 10px;
   color: white;
   font-size: 15px;
-  margin-bottom: -15px;
+  margin-bottom: 90px;
 }
 
 /* List styles */
