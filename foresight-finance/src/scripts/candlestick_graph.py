@@ -95,9 +95,9 @@ def generate_chart():
             'TBOT': {'symbol': 'diamond', 'color': 'lime'},
             'RTOP': {'symbol': 'pentagon', 'color': 'brown'},
             'RBOT': {'symbol': 'triangle-down', 'color': 'white'},
-            'PN': {'symbol': 'hexagon', 'color': 'blue'},
-            'DTRI': {'symbol': 'hexagon', 'color': 'purple'},
-            'ATRI': {'symbol': 'hexagon', 'color': 'yellow'}
+            'PN': {'symbol': 'hexagon', 'color': 'red'},        
+            'DTRI': {'symbol': 'hexagon', 'color': 'khaki'},   
+            'ATRI': {'symbol': 'hexagon', 'color': 'silver'}    
         }
 
         # Loop through each pattern to add markers and bounding boxes
