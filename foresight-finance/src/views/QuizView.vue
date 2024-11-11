@@ -1,6 +1,18 @@
 <template>
     <div class="marble-background">
+        <!-- Loading indicator -->
+        <div v-if="this.isLoading" class="loading-indicator">
+            <img :src="require('@/assets/3d-models/gif-animations/loading.gif')" alt="Loading..." />
+        </div>
         <div class="split left">
+            <div v-if="quizCompleted" class="final-score-gifs">
+                <div v-if="quizCompleted && (finalScore / 100 >= this.lessonData.passingGrade)">
+                    <img src="../assets/3d-models/gif-animations/bull.gif" alt="bull">
+                </div>
+                <div v-if="quizCompleted && (finalScore / 100 < this.lessonData.passingGrade)">
+                    <img src="../assets/3d-models/gif-animations/bear.gif" alt="bear">
+                </div>
+            </div>
             <!-- Displaying the final score when all questions are answered -->
             <h3 v-if="quizData.length > 0 && !quizCompleted" class="question-number">
                 Question {{ questionNumber }} of {{ totalNumberOfQuestions }}
@@ -30,13 +42,14 @@
 </template>
 
 <script>
-import { query, collection, getDocs, orderBy, doc } from "firebase/firestore";
+import { query, collection, getDocs, orderBy, getDoc, doc } from "firebase/firestore";
 import { db } from '@/firebase';
 
 export default {
     name: 'QuizView',
     data() {
         return {
+            isLoading: true,
             lessonId: this.$route.params.lessonID,
             questionNumber: 1,
             quizCompleted: false,
@@ -44,6 +57,7 @@ export default {
             score: 0,
             quizData: [],
             randomizedAnswers: [],
+            lessonData: [],
         };
     },
     async created() {
@@ -67,6 +81,14 @@ export default {
 
                 // Reference to the lesson document
                 const lessonRef = doc(db, "lessons", this.lessonId);
+                const lessonDoc = await getDoc(lessonRef);
+                if (lessonDoc.exists()) {
+                    this.lessonData = lessonDoc.data();
+                } else {
+                    console.error('No such document!');
+                }
+                console.log(this.lessonData.passingGrade)
+
 
                 // Reference to the quiz subcollection within the lesson document
                 const quizRef = collection(lessonRef, "quiz");
@@ -88,7 +110,7 @@ export default {
                     }))
                     .sort((a, b) => a.order - b.order);  // Sort by 'order' field
 
-
+                this.isLoading = false
                 console.log("Complete Quiz Data Array:", this.quizData);
                 console.log(this.quizData[0])
                 //First question is loaded
@@ -177,12 +199,29 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100%; /* Take the full height of the parent */
-    width: 100%; /* Take the full width of the parent */
+    height: 100%;
+    /* Take the full height of the parent */
+    width: 100%;
+    /* Take the full width of the parent */
     color: #fff;
     font-size: 36px;
     text-align: center;
     background-color: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.final-score-gifs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90%;
+    /* Take the full height of the parent */
+    width: 100%;
+    /* Take the full width of the parent */
+    color: #fff;
+    font-size: 36px;
+    text-align: center;
     padding: 20px;
     border-radius: 10px;
 }
@@ -288,5 +327,19 @@ export default {
     /* Initial width */
     transition: width 0.3s ease;
     /* Smooth transition */
+}
+
+
+.loading-indicator {
+    color: white;
+    font-size: 40px;
+    text-align: center;
+    height: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 70px;
+    margin-bottom: -18px;
+    z-index: 2;
 }
 </style>

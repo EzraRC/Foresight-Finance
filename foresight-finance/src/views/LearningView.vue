@@ -1,8 +1,10 @@
 <template>
     <!-- Show the loading screen when the page is not yet loaded -->
     <div v-if="isLoading" class="loading-screen">
-        <h1>Loading...</h1>
-        <p>Please wait while we load the content.</p>
+        <!-- Loading indicator -->
+        <div v-if="isLoading" class="loading-indicator">
+            <img :src="require('@/assets/3d-models/gif-animations/loading.gif')" alt="Loading..." />
+        </div>
     </div>
 
     <!-- Show the actual content after loading is done -->
@@ -214,6 +216,7 @@ h1 {
     justify-content: center;
     align-items: center;
     background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
+    z-index: 3;
 }
 
 .not-authorized-container {
@@ -264,6 +267,19 @@ h1 {
     animation: shine 2s infinite ease-in-out;
     background-size: 200%;
     background-position: left;
+}
+
+
+.loading-indicator {
+  color: white;
+  font-size: 40px;
+  text-align: center;
+  height: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 70px;
+  margin-bottom: -18px;
 }
 
 @keyframes fadeInSlideUp {
