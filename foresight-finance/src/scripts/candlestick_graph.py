@@ -131,8 +131,8 @@ def generate_chart():
                         f"<b>Pattern:</b> {pattern_name}<br>"
                         "<b>Date:</b> %{x}<br>"
                         "<b>Price:</b> $%{y:.2f}<br>"
-                        f"<b>Random Float:</b> {probability}<br>"
-                        f"<b>Direction:</b> {direction}<extra></extra>"
+                        "-------------------------------------------------<br>"
+                        f"<b>{probability * 100:.1f}% chance pattern will go {direction}</b><extra></extra>"
                     )
                 ))
 
