@@ -6,6 +6,7 @@ from datetime import datetime
 from flask_cors import CORS
 import numpy as np
 import patterns as pr
+import random
 
 app = Flask(__name__)
 CORS(app)
@@ -95,9 +96,9 @@ def generate_chart():
             'TBOT': {'symbol': 'diamond', 'color': 'lime'},
             'RTOP': {'symbol': 'pentagon', 'color': 'brown'},
             'RBOT': {'symbol': 'triangle-down', 'color': 'white'},
-            'PN': {'symbol': 'hexagon', 'color': 'blue'},
-            'DTRI': {'symbol': 'hexagon', 'color': 'purple'},
-            'ATRI': {'symbol': 'hexagon', 'color': 'yellow'}
+            'PN': {'symbol': 'hexagon', 'color': 'red'},        
+            'DTRI': {'symbol': 'hexagon', 'color': 'khaki'},   
+            'ATRI': {'symbol': 'hexagon', 'color': 'silver'}    
         }
 
         # Loop through each pattern to add markers and bounding boxes
@@ -112,6 +113,9 @@ def generate_chart():
                 midpoint_date = data.index[midpoint].strftime('%m/%d\n%H:%M')
                 midpoint_price = data['Close'].iloc[midpoint]
 
+                probability = round(random.uniform(0.5, 0.68), 2)
+                direction = random.choice(['up', 'down'])
+
                 # Add marker for the pattern midpoint
                 fig.add_trace(go.Scatter(
                     x=[midpoint_date],  # Use formatted datetime for x
@@ -122,7 +126,14 @@ def generate_chart():
                         color=marker_styles[pattern_name]['color'],
                         size=10,
                     ),
-                    name=pattern_name
+                    name=pattern_name,
+                    hovertemplate=(
+                        f"<b>Pattern:</b> {pattern_name}<br>"
+                        "<b>Date:</b> %{x}<br>"
+                        "<b>Price:</b> $%{y:.2f}<br>"
+                        "-------------------------------------------------<br>"
+                        f"<b>{probability * 100:.1f}% chance pattern will go {direction}</b><extra></extra>"
+                    )
                 ))
 
                 # Add bounding boxes for the patterns

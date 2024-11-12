@@ -44,7 +44,7 @@
                 <li v-for="(acronym, index) in acronymList" :key="index" class="acronym-item">
                   <!-- Pattern term with color -->
                   <p>
-                    <span class="acronym-term" :style="{ color: acronym.color.toLowerCase() }">
+                    <span class="acronym-term" :style="{ color: acronym.color.toLowerCase(), textShadow: '-1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 2px 2px 0 black' }">
                       <strong>{{ acronym.term }}</strong> - {{ acronym.color }}
                     </span>:
                   </p>
@@ -409,7 +409,7 @@ iframe {
   background-color: #f9c802;
   padding: 20px;
   border-radius: 8px;
-  width: 400px;
+  width: 600px;
   text-align: center;
   margin: auto;   /* Center modal */
 }
@@ -421,7 +421,7 @@ iframe {
 .modal-content ul {
   list-style-type: none;
   padding: 0;
-  text-align: left;
+  text-align: justify;
   max-height: 300px;
   overflow-y: auto;
 }
@@ -442,10 +442,10 @@ iframe {
 /* Styling for each acronym entry */
 .acronym-item {
   margin-bottom: 15px;
-  padding: 10px;
-  border: 1px solid #333;
+  padding: 15px;
+  border: 1px solid #000000;
   border-radius: 5px;
-  background-color: #222;
+  background-color: #1832439a;
   max-width: 500px;
 }
 
