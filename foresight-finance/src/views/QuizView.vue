@@ -28,8 +28,10 @@
             </div>
         </div>
         <div class="split right">
-            <div v-if="quizCompleted" class="final-score">
-                <h1>Your Final Score: {{ finalScore }}%</h1>
+            <div v-if="quizCompleted">
+                <h1 class="final-score">Your Final Score: {{ finalScore }}%</h1>
+                <p class="final-score-reminder">If you did not pass the quiz, don't worry! We only keep your highest
+                    passing score!</p>
             </div>
             <div v-if="!quizCompleted">
                 <button v-for="(answer, index) in randomizedAnswers" :key="index" class="answer-button"
@@ -42,8 +44,9 @@
 </template>
 
 <script>
-import { query, collection, getDocs, orderBy, getDoc, doc } from "firebase/firestore";
+import { query, collection, getDocs, orderBy, getDoc, doc, where, setDoc } from "firebase/firestore";
 import { db } from '@/firebase';
+import { getAuth } from "firebase/auth";
 
 export default {
     name: 'QuizView',
@@ -125,7 +128,7 @@ export default {
             }
         },
 
-        submitAnswer(selectedAnswer) {
+        async submitAnswer(selectedAnswer) {
             const currentQuestion = this.quizData[this.questionNumber - 1];
 
             // Check if the selected answer is correct
@@ -136,10 +139,55 @@ export default {
             // Move to the next question or end the quiz
             if (this.questionNumber < this.totalNumberOfQuestions) {
                 this.questionNumber++;
-                this.randomizeIncorrectAnswers(); // Shuffle answers for the next question
+                this.randomizeIncorrectAnswers();
             } else {
-                // Quiz is complete, show the final score
+                // Quiz is complete, calculate final score and check passing condition
                 this.quizCompleted = true;
+                const finalScore = (this.score / this.totalNumberOfQuestions) * 100;
+                const userPassed = finalScore >= this.lessonData.passingGrade * 100;
+
+                if (userPassed) {
+                    const auth = getAuth();
+                    const user = auth.currentUser;
+                    if (!user) {
+                        console.error("No user is logged in.");
+                        return;
+                    }
+
+                    const uid = user.uid;
+
+                    try {
+                        // Reference to the user's quiz progress in the `educationalProgress` collection
+                        const progressRef = doc(db, "educationalProgress", `${uid}_${this.lessonId}`);
+                        const progressDoc = await getDoc(progressRef);
+
+                        if (progressDoc.exists()) {
+                            const existingScore = progressDoc.data().score;
+
+                            // Update only if the new score is higher
+                            if (finalScore > existingScore) {
+                                await updateDoc(progressRef, {
+                                    score: finalScore,
+                                    completedAt: new Date()
+                                });
+                                console.log("Score updated to new high score:", finalScore);
+                            } else {
+                                console.log("Existing score is higher; no update made.");
+                            }
+                        } else {
+                            // If no previous progress exists, create a new document
+                            await setDoc(progressRef, {
+                                uid: uid,
+                                lessonId: this.lessonId,
+                                score: finalScore,
+                                completedAt: new Date()
+                            });
+                            console.log("New quiz progress created for user:", finalScore);
+                        }
+                    } catch (error) {
+                        console.error("Error updating quiz progress:", error);
+                    }
+                }
             }
         },
         randomizeIncorrectAnswers() {
@@ -209,6 +257,10 @@ export default {
     background-color: rgba(0, 0, 0, 0.6);
     padding: 20px;
     border-radius: 10px;
+}
+
+.final-score-reminder {
+    color: #fff;
 }
 
 .final-score-gifs {
@@ -341,5 +393,8 @@ export default {
     margin-top: 70px;
     margin-bottom: -18px;
     z-index: 2;
+    min-height: 100%;
+    min-width: 100%;
+    background-color: #02355A;
 }
 </style>
