@@ -73,7 +73,7 @@
 
       <!-- Stock information -->
       <div class="stock-info">
-        <div style="display: grid; grid-template-columns: repeat(4, 2fr); gap: 10px; column-gap: 150px; margin-left: 10px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 2fr); gap: 7px; column-gap: 150px; margin-left: 10px;">
           <p style="color: white;">Symbol: <span>{{ stockCode }}</span></p>
           <p style="color: white;">Company Name: <span>{{ stockName }}</span></p>
           <p style="color: white;">Current Price: <span>{{ currentPrice }}</span></p>
@@ -419,7 +419,7 @@ iframe {
   padding: 10px;
   color: white;
   font-size: 15px;
-  margin-bottom: 90px;
+  margin-bottom: 105px;
 }
 
 /* List styles */
