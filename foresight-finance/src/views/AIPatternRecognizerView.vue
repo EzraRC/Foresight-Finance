@@ -36,7 +36,7 @@
         <div class="pattern-recognition-bubble">
           <label for="toggle" class="pattern-label">Enable pattern recognition</label>
           <div class="toggle-wrapper">
-                  <input type="checkbox" id="toggle" v-model="enablePatternRecognition" @change="updateChart" />
+                  <input type="checkbox" id="toggle" v-model="enablePatternRecognition" @change="togglePatternRecognition"/>
                   <label for="toggle"></label>
                 </div>
         </div>
@@ -319,8 +319,7 @@ togglePatternRecognition() {
     this.updateChart();
     this.startAutoRefresh();
   }
-}
-,
+},
 
   },
   mounted() {
