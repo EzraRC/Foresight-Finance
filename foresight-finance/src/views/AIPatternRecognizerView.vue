@@ -88,9 +88,10 @@
     </div>
 
     <!-- Countdown timer for refreshing the graph -->
-    <div class="refresh-timer" v-if="refreshing">
-      <p style="color: white;">Refreshing graph in: {{ countdown }}s</p>
+    <div v-if="!enablePatternRecognition" class="refresh-timer">
+  Refreshing in: {{ countdown }} seconds
     </div>
+
 
     <!-- Modal for displaying stock symbols i got it from https://gretlcycu.wordpress.com/wp-content/uploads/2013/08/quick-ticker-symbol-list.pdf -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
@@ -124,9 +125,8 @@ export default {
       enablePatternRecognition: false,
       loading: false,
       refreshing: false,
-      countdown: 200,
+      countdown: 60,
       refreshInterval: null,
-      countdownInterval: null,
       isModalOpen: false,
       stockData: '', // Holds stock data from the file
       stockSymbols: [],
@@ -222,6 +222,9 @@ export default {
       this.loading = true;
       this.chartUrl = this.getChartUrl(this.ticker);
 
+      //Reset the countdown
+      this.countdown = 60;
+
       console.log(`Fetching data for ticker: ${this.ticker}`);
 
       // Fetch stock data
@@ -283,30 +286,42 @@ export default {
       this.isModalOpen = this.isAcronymModalOpen = false;
     },
     startAutoRefresh() {
-      this.refreshing = true;
-      this.refreshInterval = setInterval(() => {
-        this.updateChart();
-      }, 200000);
+  // Only start auto-refresh if pattern recognition is disabled
+  if (!this.enablePatternRecognition && !this.refreshInterval) {
+    this.countdown = 60; // Ensure countdown is reset when starting
+    this.refreshInterval = setInterval(() => {
+      if (this.countdown > 0) {
+        this.countdown--;
+      } else {
+        this.updateChart(); // Refresh the chart
+        this.countdown = 60; // Reset countdown after refreshing
+      }
+    }, 1000); // Countdown decreases every second
+  }
+},
 
-      this.countdown = 200;
-      this.countdownInterval = setInterval(() => {
-        this.countdown -= 1;
-        if (this.countdown <= 0) {
-          this.countdown = 200;
-        }
-      }, 1000);
-    },
-    stopAutoRefresh() {
-      if (this.refreshInterval) {
-        clearInterval(this.refreshInterval);
-        this.refreshInterval = null;
-      }
-      if (this.countdownInterval) {
-        clearInterval(this.countdownInterval);
-        this.countdownInterval = null;
-      }
-      this.refreshing = false;
-    },
+stopAutoRefresh() {
+  if (this.refreshInterval) {
+    clearInterval(this.refreshInterval);
+    this.refreshInterval = null;
+  }
+  this.countdown = null;
+},
+
+togglePatternRecognition() {
+  if (this.enablePatternRecognition) {
+    // If enabling pattern recognition, stop the auto-refresh
+    this.stopAutoRefresh();
+    this.fetchPatternChart();
+  } else {
+    // If disabling pattern recognition, restart the auto-refresh
+    this.countdown = 60;
+    this.updateChart();
+    this.startAutoRefresh();
+  }
+}
+,
+
   },
   mounted() {
     this.startAutoRefresh();
