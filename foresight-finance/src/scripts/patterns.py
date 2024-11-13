@@ -12,8 +12,6 @@ from statsmodels.nonparametric.kernel_regression import KernelReg
 from yahoofinancials import YahooFinancials
 import yfinance as yf
 import matplotlib.patches as patches
-from scipy.signal import argrelextrema
-from scipy.ndimage import gaussian_filter1d
 
 """
 def preprocess_data(start_date, end_date, stock_code):
@@ -104,26 +102,7 @@ def find_max_min(prices):
     return smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
            price_max_indices, price_min_indices, max_min, max_min_types
 
-def find_max_min(prices,two):
-    # Use Gaussian smoothing instead of KernelReg
-    smooth_prices = pd.Series(data=gaussian_filter1d(prices.values, sigma=2), index=prices.index)
 
-    # Find local max/min using numpy functions directly for speed
-    smooth_prices_max_indices = argrelextrema(smooth_prices.values, np.greater, order=1)[0]
-    smooth_prices_min_indices = argrelextrema(smooth_prices.values, np.less, order=1)[0]
-
-    # Use numpy to efficiently gather max/min indices in the specified range
-    max_candidates = np.array([prices.iloc[i-2:i+2].idxmax() for i in smooth_prices_max_indices if 1 < i < len(prices)-1])
-    min_candidates = np.array([prices.iloc[i-2:i+2].idxmin() for i in smooth_prices_min_indices if 1 < i < len(prices)-1])
-
-    # Filter duplicates by converting to DataFrame and dropping duplicates
-    max_min = pd.Series(prices.loc[np.concatenate([max_candidates, min_candidates])]).sort_index().drop_duplicates()
-    
-    # Label max and min types
-    max_min_types = pd.Series(data=['max'] * len(max_candidates) + ['min'] * len(min_candidates), 
-                              index=np.concatenate([max_candidates, min_candidates])).sort_index()
-
-    return smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, max_candidates, min_candidates, max_min, max_min_types
 
 
 def plot_window(dates, prices, smooth_prices, 

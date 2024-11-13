@@ -34,11 +34,12 @@
 
         <!-- Toggle checkbox for pattern recognition -->
         <div class="pattern-recognition-bubble">
-    <label for="toggle" class="pattern-label">Enable pattern recognition</label>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="toggle" v-model="enablePatternRecognition">
-      <label for="toggle"></label>
-    </div></div>
+          <label for="toggle" class="pattern-label">Enable pattern recognition</label>
+          <div class="toggle-wrapper">
+                  <input type="checkbox" id="toggle" v-model="enablePatternRecognition" @change="updateChart" />
+                  <label for="toggle"></label>
+                </div>
+        </div>
 
         <!-- Modal for displaying acronyms and their explanations -->
         <div v-if="isAcronymModalOpen" class="modal-overlay" @click.self="closeAcronymModal">
@@ -119,6 +120,8 @@ export default {
     return {
       ticker: '',
       chartUrl: this.getChartUrl(''),
+      patternChartUrl: '',
+      enablePatternRecognition: false,
       loading: false,
       refreshing: false,
       countdown: 200,
@@ -207,46 +210,66 @@ export default {
     getChartUrl(ticker) {
       return `http://localhost:8080/candlestick_chart.html?ticker=${ticker}&timestamp=${new Date().getTime()}`;
     },
-    updateChart() {
-    if (this.ticker.trim() === '') {
-      return; // Exit the method if ticker is empty
-    }
-    
-    // Proceed with fetching the chart
-    this.chartUrl = this.getChartUrl(this.ticker);
-    this.loading = true; // Show loading indicator
 
-    // Fetch the chart data
-    console.log(`Fetching data for ticker: ${this.ticker}`);
+    getPatternChartUrl(ticker) {
+      return `http://localhost:8080/candlestick_chart_patterns.html?ticker=${ticker}&timestamp=${new Date().getTime()}`;
+    },
 
-      setTimeout(async () => {
-        try {
-          const response = await fetch(`http://localhost:5000/generate_chart?ticker=${this.ticker}`);
-          const data = await response.json();
+        async updateChart() {
+      if (this.ticker.trim() === '') return;
 
-          console.log("Response data:", data);
-          if (data.success) {
-          this.chartUrl = this.getChartUrl(this.ticker);
+      // Set loading to true to show the indicator
+      this.loading = true;
+      this.chartUrl = this.getChartUrl(this.ticker);
+
+      console.log(`Fetching data for ticker: ${this.ticker}`);
+
+      // Fetch stock data
+      try {
+        const response = await fetch(`http://localhost:5000/generate_chart?ticker=${this.ticker}`);
+        const data = await response.json();
+
+        if (data.success) {
           this.stockName = data.longName;
           this.stockCode = data.symbol;
           this.marketCap = data.marketCap;
           this.percentChange = data.percentChange;
           this.volume = data.volume;
-          this.industry = data.industry; 
+          this.industry = data.industry;
           this.sector = data.sector;
           this.currentPrice = data.currentPrice;
 
-          console.log(`Chart updated for ticker: ${this.ticker}`);
-        } else {
-            console.error('Error with data response:', data.message);
-            this.clearStockInfo();
+          // After fetching stock data, check if pattern recognition is enabled
+          if (this.enablePatternRecognition) {
+            await this.fetchPatternChart();
           }
-        } catch (error) {
-          console.error('Error fetching chart data:', error);
-        } finally {
-          this.loading = false;
+        } else {
+          console.error('Error with data response:', data.message);
+          this.clearStockInfo();
         }
-      }, 2000);
+      } catch (error) {
+        console.error('Error fetching chart data:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchPatternChart() {
+      console.log('Fetching pattern chart for ticker:', this.ticker);
+
+      // Fetch the pattern-recognized chart
+      try {
+        const response = await fetch(`http://localhost:5000/generate_chart_with_patterns?ticker=${this.ticker}`);
+        const data = await response.json();
+
+        if (data.success) {
+          this.patternChartUrl = this.getPatternChartUrl(this.ticker);
+          console.log('Pattern chart updated for ticker:', this.ticker);
+        } else {
+          console.error('Error with pattern chart response:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching pattern chart:', error);
+      }
     },
     clearStockInfo() {
       this.stockCode = 'Error: Invalid ticker';
