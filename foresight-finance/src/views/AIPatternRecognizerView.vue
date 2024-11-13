@@ -28,9 +28,17 @@
         <a href="javascript:void(0)" @click="openModal" class="trending-link">Click here for a list of stock symbols!</a>
 
         <!-- Hyperlink to open key with pattern explanation -->
-        <a href="javascript:void(0)" @click="openAcronymModal" class="trending-link">
+        <a href="javascript:void(0)" @click="openAcronymModal" class="trending-link" style="margin-right: 10px;">
           Need help with the patterns? Click here!
         </a>
+
+        <!-- Toggle checkbox for pattern recognition -->
+        <div class="pattern-recognition-bubble">
+    <label for="toggle" class="pattern-label">Enable pattern recognition</label>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="toggle" v-model="enablePatternRecognition">
+      <label for="toggle"></label>
+    </div></div>
 
         <!-- Modal for displaying acronyms and their explanations -->
         <div v-if="isAcronymModalOpen" class="modal-overlay" @click.self="closeAcronymModal">
@@ -479,4 +487,64 @@ button {
 button:hover {
   background-color: #666;
 }
+
+.pattern-recognition-bubble {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  background-color: #f9c802; 
+  color: black;
+  border-radius: 10px;
+  padding: 10px 10px; /* Padding inside the bubble */
+}
+
+.pattern-label {
+  font-size: 16px;
+  margin-right: 10px; /* Adds some space between the label and the toggle */
+}
+
+.toggle-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.toggle-wrapper input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-wrapper label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.toggle-wrapper label:before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 30px;
+  height: 30px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease-in-out;
+}
+
+.toggle-wrapper input[type="checkbox"]:checked + label {
+  background-color: rgb(32, 52, 68);
+}
+
+.toggle-wrapper input[type="checkbox"]:checked + label:before {
+  transform: translateX(28px);
+}
+
 </style>
