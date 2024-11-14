@@ -43,6 +43,10 @@ export default {
                 plugins: {
                     legend: {
                         position: 'top',
+                        display: true,
+                        labels: {
+                            color: '#FFFFFF', // Set to white or any other desired color
+                        },
                     },
                     tooltip: {
                         callbacks: {
@@ -70,6 +74,17 @@ export default {
                 console.warn("User not authenticated");
             }
         });
+
+        // Override legend settings for pie charts here
+        ChartJS.overrides.pie = {
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#FFFFFF', // Set legend text color
+                    },
+                },
+            },
+        };
     },
     methods: {
         async fetchUserProgress() {
@@ -121,8 +136,9 @@ export default {
 
 <style scoped>
 .chart-background {
-    background-color: rgba(255, 255, 255, 0.75);
+    background-color: rgba(68, 68, 68, 0.75);
     border-radius: 1rem;
     padding-bottom: 25px;
 }
+
 </style>
