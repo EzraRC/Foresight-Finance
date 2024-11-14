@@ -28,9 +28,18 @@
         <a href="javascript:void(0)" @click="openModal" class="trending-link">Click here for a list of stock symbols!</a>
 
         <!-- Hyperlink to open key with pattern explanation -->
-        <a href="javascript:void(0)" @click="openAcronymModal" class="trending-link">
+        <a href="javascript:void(0)" @click="openAcronymModal" class="trending-link" style="margin-right: 10px;">
           Need help with the patterns? Click here!
         </a>
+
+        <!-- Toggle checkbox for pattern recognition -->
+        <div class="pattern-recognition-bubble">
+          <label for="toggle" class="pattern-label">Enable pattern recognition</label>
+          <div class="toggle-wrapper">
+                  <input type="checkbox" id="toggle" v-model="enablePatternRecognition" @change="togglePatternRecognition"/>
+                  <label for="toggle"></label>
+                </div>
+        </div>
 
         <!-- Modal for displaying acronyms and their explanations -->
         <div v-if="isAcronymModalOpen" class="modal-overlay" @click.self="closeAcronymModal">
@@ -64,7 +73,7 @@
 
       <!-- Stock information -->
       <div class="stock-info">
-        <div style="display: grid; grid-template-columns: repeat(4, 2fr); gap: 10px; column-gap: 150px; margin-left: 10px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 2fr); gap: 7px; column-gap: 150px; margin-left: 10px;">
           <p style="color: white;">Symbol: <span>{{ stockCode }}</span></p>
           <p style="color: white;">Company Name: <span>{{ stockName }}</span></p>
           <p style="color: white;">Current Price: <span>{{ currentPrice }}</span></p>
@@ -79,9 +88,10 @@
     </div>
 
     <!-- Countdown timer for refreshing the graph -->
-    <div class="refresh-timer" v-if="refreshing">
-      <p style="color: white;">Refreshing graph in: {{ countdown }}s</p>
+    <div v-if="!enablePatternRecognition" class="refresh-timer">
+  Refreshing in: {{ countdown }} seconds
     </div>
+
 
     <!-- Modal for displaying stock symbols i got it from https://gretlcycu.wordpress.com/wp-content/uploads/2013/08/quick-ticker-symbol-list.pdf -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
@@ -111,11 +121,12 @@ export default {
     return {
       ticker: '',
       chartUrl: this.getChartUrl(''),
+      patternChartUrl: '',
+      enablePatternRecognition: false,
       loading: false,
       refreshing: false,
-      countdown: 200,
+      countdown: 60,
       refreshInterval: null,
-      countdownInterval: null,
       isModalOpen: false,
       stockData: '', // Holds stock data from the file
       stockSymbols: [],
@@ -199,46 +210,69 @@ export default {
     getChartUrl(ticker) {
       return `http://localhost:8080/candlestick_chart.html?ticker=${ticker}&timestamp=${new Date().getTime()}`;
     },
-    updateChart() {
-    if (this.ticker.trim() === '') {
-      return; // Exit the method if ticker is empty
-    }
-    
-    // Proceed with fetching the chart
-    this.chartUrl = this.getChartUrl(this.ticker);
-    this.loading = true; // Show loading indicator
 
-    // Fetch the chart data
-    console.log(`Fetching data for ticker: ${this.ticker}`);
+    getPatternChartUrl(ticker) {
+      return `http://localhost:8080/candlestick_chart_patterns.html?ticker=${ticker}&timestamp=${new Date().getTime()}`;
+    },
 
-      setTimeout(async () => {
-        try {
-          const response = await fetch(`http://localhost:5000/generate_chart?ticker=${this.ticker}`);
-          const data = await response.json();
+        async updateChart() {
+      if (this.ticker.trim() === '') return;
 
-          console.log("Response data:", data);
-          if (data.success) {
-          this.chartUrl = this.getChartUrl(this.ticker);
+      // Set loading to true to show the indicator
+      this.loading = true;
+      this.chartUrl = this.getChartUrl(this.ticker);
+
+      //Reset the countdown
+      this.countdown = 60;
+
+      console.log(`Fetching data for ticker: ${this.ticker}`);
+
+      // Fetch stock data
+      try {
+        const response = await fetch(`http://localhost:5000/generate_chart?ticker=${this.ticker}`);
+        const data = await response.json();
+
+        if (data.success) {
           this.stockName = data.longName;
           this.stockCode = data.symbol;
           this.marketCap = data.marketCap;
           this.percentChange = data.percentChange;
           this.volume = data.volume;
-          this.industry = data.industry; 
+          this.industry = data.industry;
           this.sector = data.sector;
           this.currentPrice = data.currentPrice;
 
-          console.log(`Chart updated for ticker: ${this.ticker}`);
-        } else {
-            console.error('Error with data response:', data.message);
-            this.clearStockInfo();
+          // After fetching stock data, check if pattern recognition is enabled
+          if (this.enablePatternRecognition) {
+            await this.fetchPatternChart();
           }
-        } catch (error) {
-          console.error('Error fetching chart data:', error);
-        } finally {
-          this.loading = false;
+        } else {
+          console.error('Error with data response:', data.message);
+          this.clearStockInfo();
         }
-      }, 2000);
+      } catch (error) {
+        console.error('Error fetching chart data:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchPatternChart() {
+      console.log('Fetching pattern chart for ticker:', this.ticker);
+
+      // Fetch the pattern-recognized chart
+      try {
+        const response = await fetch(`http://localhost:5000/generate_chart_with_patterns?ticker=${this.ticker}`);
+        const data = await response.json();
+
+        if (data.success) {
+          this.patternChartUrl = this.getPatternChartUrl(this.ticker);
+          console.log('Pattern chart updated for ticker:', this.ticker);
+        } else {
+          console.error('Error with pattern chart response:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching pattern chart:', error);
+      }
     },
     clearStockInfo() {
       this.stockCode = 'Error: Invalid ticker';
@@ -252,30 +286,41 @@ export default {
       this.isModalOpen = this.isAcronymModalOpen = false;
     },
     startAutoRefresh() {
-      this.refreshing = true;
-      this.refreshInterval = setInterval(() => {
-        this.updateChart();
-      }, 200000);
+  // Only start auto-refresh if pattern recognition is disabled
+  if (!this.enablePatternRecognition && !this.refreshInterval) {
+    this.countdown = 60; // Ensure countdown is reset when starting
+    this.refreshInterval = setInterval(() => {
+      if (this.countdown > 0) {
+        this.countdown--;
+      } else {
+        this.updateChart(); // Refresh the chart
+        this.countdown = 60; // Reset countdown after refreshing
+      }
+    }, 1000); // Countdown decreases every second
+  }
+},
 
-      this.countdown = 200;
-      this.countdownInterval = setInterval(() => {
-        this.countdown -= 1;
-        if (this.countdown <= 0) {
-          this.countdown = 200;
-        }
-      }, 1000);
-    },
-    stopAutoRefresh() {
-      if (this.refreshInterval) {
-        clearInterval(this.refreshInterval);
-        this.refreshInterval = null;
-      }
-      if (this.countdownInterval) {
-        clearInterval(this.countdownInterval);
-        this.countdownInterval = null;
-      }
-      this.refreshing = false;
-    },
+stopAutoRefresh() {
+  if (this.refreshInterval) {
+    clearInterval(this.refreshInterval);
+    this.refreshInterval = null;
+  }
+  this.countdown = null;
+},
+
+togglePatternRecognition() {
+  if (this.enablePatternRecognition) {
+    // If enabling pattern recognition, stop the auto-refresh
+    this.stopAutoRefresh();
+    this.fetchPatternChart();
+  } else {
+    // If disabling pattern recognition, restart the auto-refresh
+    this.countdown = 60;
+    this.updateChart();
+    this.startAutoRefresh();
+  }
+},
+
   },
   mounted() {
     this.startAutoRefresh();
@@ -388,7 +433,7 @@ iframe {
   padding: 10px;
   color: white;
   font-size: 15px;
-  margin-bottom: 90px;
+  margin-bottom: 105px;
 }
 
 /* List styles */
@@ -479,4 +524,64 @@ button {
 button:hover {
   background-color: #666;
 }
+
+.pattern-recognition-bubble {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  background-color: #f9c802; 
+  color: black;
+  border-radius: 10px;
+  padding: 10px 10px; /* Padding inside the bubble */
+}
+
+.pattern-label {
+  font-size: 16px;
+  margin-right: 10px; /* Adds some space between the label and the toggle */
+}
+
+.toggle-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.toggle-wrapper input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-wrapper label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.toggle-wrapper label:before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 30px;
+  height: 30px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease-in-out;
+}
+
+.toggle-wrapper input[type="checkbox"]:checked + label {
+  background-color: rgb(32, 52, 68);
+}
+
+.toggle-wrapper input[type="checkbox"]:checked + label:before {
+  transform: translateX(28px);
+}
+
 </style>
