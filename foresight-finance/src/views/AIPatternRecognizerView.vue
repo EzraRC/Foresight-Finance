@@ -490,7 +490,7 @@ iframe {
   padding: 15px;
   border: 1px solid #000000;
   border-radius: 5px;
-  background-color: #1F36449a;
+  background-color: #1832439a;
   max-width: 500px;
 }
 

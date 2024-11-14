@@ -220,7 +220,7 @@ h1 {
 }
 
 .not-authorized-container {
-    background-color: rgba(2, 53, 90, 0.95);
+    background-color: rgba(24, 50, 67, 0.95);
     padding: 75px;
     text-align: center;
 }
