@@ -110,7 +110,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
+    background-image: url("../assets/marbleBackgroundNavyBlueTint.png");
+    overflow-y: auto;
 }
 
 .content-container {
@@ -133,19 +134,19 @@ body {
     color: white;
     padding: 10px 20px;
     border-radius: 5px;
-    margin-bottom: 20px;
+    margin-top: 280px;
     font-size: 24px;
     display: inline-block;
     text-align: center;
 }
 
 .iframe-container {
+    margin-top: 20px;
     position: relative;
     width: 100%;
     padding-bottom: 56.25%;
     /* 16:9 aspect ratio */
-    height: 0;
-    max-width: 100%;
+    height: 80%;
 }
 
 .iframe-container iframe {
@@ -165,7 +166,7 @@ h1 {
     display: flex;
     justify-content: center;
     /* Centers the button horizontally */
-    margin-top: 20px;
+    margin-top: 30px;
     /* Add space above the button */
     z-index: 1;
     /* Ensures the button appears above the background */
@@ -173,6 +174,7 @@ h1 {
 
 .quizButton-container button {
     background-color: #e3b130;
+    margin-bottom: 30px;
     padding: 10px 20px;
     /* Adjust padding as needed */
     font-size: 16px;
@@ -216,7 +218,8 @@ h1 {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
+    background-image: url("../assets/educationPageBackground.png");
+    background-color: rgba(24, 50, 67, 0.95);
     z-index: 3;
 }
 

@@ -217,7 +217,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .marble-background {
     position: fixed;
     margin-top: 9.5vh;
@@ -229,7 +229,7 @@ export default {
     background-position: center;
     background-repeat: no-repeat;
     display: flex;
-    background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
+    background-image: url("../assets/marbleBackgroundNavyBlueTint.png");
 }
 
 .marble-background::before {
@@ -239,7 +239,6 @@ export default {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(2, 53, 90, 0.9);
     z-index: 0;
 }
 
@@ -287,6 +286,7 @@ export default {
     padding-top: 20px;
     overflow-x: hidden;
     padding-bottom: 50px;
+    overflow-y: hidden;
 }
 
 /* Control the left side */

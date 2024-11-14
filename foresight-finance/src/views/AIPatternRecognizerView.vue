@@ -136,6 +136,7 @@ export default {
   },
   created() {
     this.fetchStockSymbols(); // Fetch symbols when component is created
+    this.fetchAcronymKey();
   },
   methods: {  
     async fetchAcronymKey() {
@@ -171,7 +172,6 @@ export default {
       .filter(entry => entry); // Remove null or invalid entries
 
     console.log('Parsed acronym list:', this.acronymList); // Debugging output
-    this.isAcronymModalOpen = true; // Open modal on successful fetch
   } catch (error) {
     console.error('Error fetching acronym key:', error);
   }

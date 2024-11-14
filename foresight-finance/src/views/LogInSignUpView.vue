@@ -164,7 +164,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .marble-background {
   position: fixed;
   top: 0;
@@ -179,7 +179,7 @@ export default {
   align-items: center;
   z-index: 1;
   /* Set a base z-index */
-  background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
+  background-image: url("../assets/marbleBackgroundNavyBlueTint.png");
 }
 
 .marble-background::before {

@@ -143,7 +143,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .marble-background {
   position: fixed;
   margin-top: 9.5vh;
@@ -155,20 +155,8 @@ export default {
   background-position: center;
   background-repeat: no-repeat;
   display: flex;
-  background-image: url("../assets/marbleHOMEPAGE-zoom-0-50-Darker.jpg");
-}
-
-.marble-background::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(2, 53, 90, 0.9);
-  /* Navy blue (#000080) with 60% opacity */
-  z-index: 0;
-  /* Make sure the overlay sits behind other content */
+  background-image: url("../assets/educationPageBackgroundEDITED.png");
+  background-color: #183243;
 }
 
 .split {
@@ -179,6 +167,7 @@ export default {
   position: fixed;
   padding-top: 20px;
   overflow-x: hidden;
+  margin-bottom: 200px;
 }
 
 /* Control the left side */
@@ -212,7 +201,7 @@ export default {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  min-width: 400px;
+  min-width: 400px; 
 }
 
 /* Accordion button styling */
@@ -222,7 +211,7 @@ export default {
   color: #eee;
   cursor: pointer;
   padding: 18px;
-  width: 100%;
+  width: 120%;
   text-align: left;
   border: none;
   outline: none;
@@ -247,6 +236,7 @@ export default {
   padding: 0 18px;
   /* Initial padding */
   max-height: 0;
+  width: 120%;
   /* Initial height of 0 for hidden state */
   transition: max-height 0.4s ease, padding 0.4s ease;
   /* Smooth animation */
@@ -265,6 +255,8 @@ export default {
 
 .lesson-text {
   color: #000000;
+  margin-top: 15px;
+  margin-bottom: 15px;
 }
 
 .accordion:after {
