@@ -422,6 +422,7 @@ iframe {
   align-items: center;
   margin-top: 70px;
   margin-bottom: -18px;
+  background-color: rgb(31, 54, 68);
 }
 
 .refresh-timer {
