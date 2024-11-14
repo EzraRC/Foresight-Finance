@@ -172,6 +172,7 @@ h1 {
 }
 
 .quizButton-container button {
+    background-color: #e3b130;
     padding: 10px 20px;
     /* Adjust padding as needed */
     font-size: 16px;

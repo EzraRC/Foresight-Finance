@@ -198,7 +198,7 @@ export default {
   /* Make z-index effective */
   z-index: 2;
   /* Position above the marble background and its overlay */
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: #e3b130;
   padding: 20px;
   border-radius: 8px;
   text-align: center;
@@ -218,7 +218,7 @@ button {
 }
 
 p {
-  color: blue;
+  color: rgb(0, 0, 59);
   cursor: pointer;
   margin-top: 10px;
 }
@@ -235,7 +235,7 @@ p {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -246,7 +246,7 @@ p {
 .modal {
   position: relative;
   /* Optional: if you need to position modal content */
-  background-color: #fff;
+  background-color: #e3b130;
   padding: 20px;
   border-radius: 8px;
   text-align: center;

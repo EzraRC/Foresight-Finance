@@ -234,7 +234,7 @@ export default {
 }
 
 .accordion.active {
-  background-color: #666;
+  background-color: #654f16;
   /* Change background color when active */
   color: white;
   /* Change text color when active */
@@ -242,7 +242,7 @@ export default {
 
 /* The Panel (hidden by default, animated open and close) */
 .panel {
-  background-color: grey;
+  background-color: #e3b130;
   overflow: hidden;
   padding: 0 18px;
   /* Initial padding */
@@ -259,18 +259,18 @@ export default {
 .panel.active {
   background-color: #333;
   /* Change panel background when active */
-  color: rgb(109, 109, 109);
+  color: #e3b130;
   /* Change text color when the panel is open */
 }
 
 .lesson-text {
-  color: #eee;
+  color: #000000;
 }
 
 .accordion:after {
   content: '\02795';
   font-size: 13px;
-  color: #777;
+  color: #000000;
   float: right;
   margin-left: 5px;
 }

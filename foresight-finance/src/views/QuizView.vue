@@ -314,11 +314,11 @@ export default {
 }
 
 .question-number {
-    color: grey;
+    color: #e3b130;
 }
 
 .question-text {
-    color: lightgray;
+    color: rgb(255, 255, 255);
     text-align: left;
 }
 
@@ -327,8 +327,8 @@ export default {
     width: 80%;
     padding: 20px;
     font-size: 24px;
-    color: #fff;
-    background-color: #6b6b6b;
+    color: black;
+    background-color: #aeaeae;
     border: none;
     border-radius: 8px;
     margin: 15px 0;
@@ -343,7 +343,7 @@ export default {
 }
 
 .answer-button:hover {
-    background-color: #026799;
+    background-color: #e3b130;
     transform: scale(1.02);
 }
 
