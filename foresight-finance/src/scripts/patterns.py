@@ -12,6 +12,8 @@ from statsmodels.nonparametric.kernel_regression import KernelReg
 from yahoofinancials import YahooFinancials
 import yfinance as yf
 import matplotlib.patches as patches
+from scipy.signal import argrelextrema
+from scipy.ndimage import gaussian_filter1d
 
 """
 def preprocess_data(start_date, end_date, stock_code):
@@ -56,7 +58,7 @@ def preprocess_data(start_date, end_date, stock_code):
     df = df.reset_index()
     return df, df['Close'], df['Date']
 '''
-    
+
 #yahoo finance for minute data
 def preprocess_data(stock_code):
     # Download stock data for the past 5 days with 1-minute intervals using yfinance
@@ -101,7 +103,6 @@ def find_max_min(prices):
 
     return smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
            price_max_indices, price_min_indices, max_min, max_min_types
-
 
 
 
@@ -355,7 +356,7 @@ if __name__ == "__main__":
     ax.plot(dates, prices, label='Prices')
     ax.plot(dates, smooth_prices, label='Smoothed Prices', linestyle='dashed')
     ax.set_xticks(np.arange(0, len(dates), 30))
-        
+
     smooth_prices_max = smooth_prices.loc[smooth_prices_max_indices]
     smooth_prices_min = smooth_prices.loc[smooth_prices_min_indices]
     price_max = prices.loc[price_max_indices]
@@ -373,10 +374,9 @@ if __name__ == "__main__":
             smooth_prices_max_indices, smooth_prices_min_indices,
             price_max_indices, price_min_indices, 
             start=18, end=34, ax=None)
-    
+
     print("FINDING PATTERNS")
     patterns = find_patterns(max_min, max_min_types)
     patterns
 
     print("VISAULZING ALL PATTERNS")
-    visualize_all_patterns(dates, prices, patterns)

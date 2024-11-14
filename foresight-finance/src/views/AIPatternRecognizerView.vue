@@ -293,7 +293,6 @@ export default {
       if (this.countdown > 0) {
         this.countdown--;
       } else {
-        this.updateChart(); // Refresh the chart
         this.countdown = 60; // Reset countdown after refreshing
       }
     }, 1000); // Countdown decreases every second
@@ -311,6 +310,7 @@ stopAutoRefresh() {
 togglePatternRecognition() {
   if (this.enablePatternRecognition) {
     // If enabling pattern recognition, stop the auto-refresh
+    this.updateChart();
     this.stopAutoRefresh();
     this.fetchPatternChart();
   } else {
@@ -331,7 +331,7 @@ togglePatternRecognition() {
   computed: {
     containerStyle() {
       return {
-        backgroundColor: '#183243',
+        backgroundColor: '#1F3644',
         padding: '30px',
         borderRadius: '10px',
         position: 'relative',
@@ -433,7 +433,7 @@ iframe {
   padding: 10px;
   color: white;
   font-size: 15px;
-  margin-bottom: 105px;
+  margin-bottom: 100px;
 }
 
 /* List styles */
@@ -490,7 +490,7 @@ iframe {
   padding: 15px;
   border: 1px solid #000000;
   border-radius: 5px;
-  background-color: #1832439a;
+  background-color: #1F36449a;
   max-width: 500px;
 }
 
@@ -558,7 +558,7 @@ button:hover {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: #ccc;
+  background-color: #600000;
   border-radius: 20px;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out;
@@ -577,7 +577,7 @@ button:hover {
 }
 
 .toggle-wrapper input[type="checkbox"]:checked + label {
-  background-color: rgb(32, 52, 68);
+  background-color: rgb(24, 121, 0);
 }
 
 .toggle-wrapper input[type="checkbox"]:checked + label:before {
