@@ -4,7 +4,20 @@
         <div v-if="this.isLoading" class="loading-indicator">
             <img :src="require('@/assets/3d-models/gif-animations/loading.gif')" alt="Loading..." />
         </div>
+
+        <!-- Feedback GIF and text based on answer correctness -->
+        <div v-if="showFeedback" class="answer-feedback">
+            <h1 v-if="isAnswerCorrect" class="feedback-text correct">Correct</h1>
+            <h1 v-if="!isAnswerCorrect" class="feedback-text incorrect">Incorrect</h1>
+            <img v-if="isAnswerCorrect" src="../assets/3d-models/gif-animations/bull.gif" alt="Correct Answer" class="feedback-gif" />
+            <img v-if="!isAnswerCorrect" src="../assets/3d-models/gif-animations/bear.gif" alt="Incorrect Answer" class="feedback-gif" />
+            <button class="next-button" @click="proceedToNextQuestion">Next Question</button>
+        </div>
+
+        <!-- Left side of the screen -->
         <div class="split left">
+
+            <!-- Displaying final score GIFs after quiz completion -->
             <div v-if="quizCompleted" class="final-score-gifs">
                 <div v-if="quizCompleted && (finalScore / 100 >= this.lessonData.passingGrade)">
                     <img src="../assets/3d-models/gif-animations/bull.gif" alt="bull">
@@ -23,11 +36,8 @@
             <h1 v-if="quizData.length > 0 && !quizCompleted" class="question-text">
                 {{ quizData[questionNumber - 1].question }}
             </h1>
-    <!-- Display the bull or bear GIF based on the previous answer -->
-    <div v-if="isAnswerCorrect !== null && !quizCompleted" class="answer-feedback">
-        <img v-if="isAnswerCorrect" src="../assets/3d-models/gif-animations/bull.gif" alt="Correct Answer" />
-        <img v-else src="../assets/3d-models/gif-animations/bear.gif" alt="Incorrect Answer" />
-    </div>
+
+            <!-- Progress bar -->
             <div v-if="quizData.length > 0 && !quizCompleted" class="progress-bar">
                 <div class="progress" :style="{ width: progressPercentage + '%' }"></div>
             </div>
@@ -69,6 +79,7 @@ export default {
             randomizedAnswers: [],
             lessonData: [],
             isAnswerCorrect: null,
+            showFeedback: false,
         };
     },
     async created() {
@@ -143,9 +154,11 @@ export default {
             if (selectedAnswer === currentQuestion.correctAnswer) {
                 this.score += 1;
                 this.isAnswerCorrect = true;
+                this.showFeedback = true;
             }
             else {
                 this.isAnswerCorrect = false;
+                this.showFeedback = true;
             }
 
             // Move to the next question or end the quiz
@@ -202,6 +215,12 @@ export default {
                 }
             }
         },
+
+        proceedToNextQuestion() {
+            this.isAnswerCorrect = null;
+            this.showFeedback = false;
+        },
+
         randomizeIncorrectAnswers() {
             const currentQuestion = this.quizData[this.questionNumber - 1];
 
@@ -260,7 +279,7 @@ export default {
     align-items: center;
     height: 100%;
     /* Take the full height of the parent */
-    width: 100%;
+    width: 69%;
     /* Take the full width of the parent */
     color: #fff;
     font-size: 36px;
@@ -287,6 +306,24 @@ export default {
     text-align: center;
     padding: 20px;
     border-radius: 10px;
+}
+
+.feedback-text {
+    color: #fff;
+    text-align: center;
+    font-size: 48px;
+    margin-bottom: 20px;
+    animation: fadeIn 0.5s ease-in-out;
+    margin-left: 750px;
+    margin-top: -100px;
+}
+
+.correct {
+    color: #4caf50; /* Green color for correct answers */
+}
+
+.incorrect {
+    color: #f44336; /* Red color for incorrect answers */
 }
 
 .split {
@@ -372,13 +409,25 @@ export default {
     margin-right: 20px;
     font-size: 20px;
 }
+.feedback-gif {
+    margin-right: 800px;
+    scale: 2.0;
+}
 
 .answer-feedback {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-image: url('@/assets/marbleBackgroundNavyBlueTint.png');
+    background-size: cover;
+    background-position: center;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    margin-top: 100px;
-    margin-bottom: -415px;
+    justify-content: center;
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 1000;
 }
 
 .answer-feedback img {
@@ -386,6 +435,22 @@ export default {
     height: auto;
 }
 
+.next-button {
+    margin-top: 20px;
+    margin-left: 750px;
+    padding: 12px 24px;
+    background-color: #e3b130;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    color: black;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.next-button:hover {
+    background-color: #ffb347;
+}
 
 /*Progress Bar */
 .progress-bar {
@@ -423,5 +488,10 @@ export default {
     min-height: 100%;
     min-width: 100%;
     background-color: #02355A;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 </style>
