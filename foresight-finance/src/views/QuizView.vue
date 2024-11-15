@@ -13,6 +13,7 @@
                     <img src="../assets/3d-models/gif-animations/bear.gif" alt="bear">
                 </div>
             </div>
+            
             <!-- Displaying the final score when all questions are answered -->
             <h3 v-if="quizData.length > 0 && !quizCompleted" class="question-number">
                 Question {{ questionNumber }} of {{ totalNumberOfQuestions }}
@@ -22,11 +23,17 @@
             <h1 v-if="quizData.length > 0 && !quizCompleted" class="question-text">
                 {{ quizData[questionNumber - 1].question }}
             </h1>
-
+    <!-- Display the bull or bear GIF based on the previous answer -->
+    <div v-if="isAnswerCorrect !== null && !quizCompleted" class="answer-feedback">
+        <img v-if="isAnswerCorrect" src="../assets/3d-models/gif-animations/bull.gif" alt="Correct Answer" />
+        <img v-else src="../assets/3d-models/gif-animations/bear.gif" alt="Incorrect Answer" />
+    </div>
             <div v-if="quizData.length > 0 && !quizCompleted" class="progress-bar">
                 <div class="progress" :style="{ width: progressPercentage + '%' }"></div>
             </div>
         </div>
+
+        <!-- Right side of the screen -->
         <div class="split right">
             <div v-if="quizCompleted">
                 <h1 class="final-score">Your Final Score: {{ finalScore }}%</h1>
@@ -61,6 +68,7 @@ export default {
             quizData: [],
             randomizedAnswers: [],
             lessonData: [],
+            isAnswerCorrect: null,
         };
     },
     async created() {
@@ -134,6 +142,10 @@ export default {
             // Check if the selected answer is correct
             if (selectedAnswer === currentQuestion.correctAnswer) {
                 this.score += 1;
+                this.isAnswerCorrect = true;
+            }
+            else {
+                this.isAnswerCorrect = false;
             }
 
             // Move to the next question or end the quiz
@@ -361,15 +373,30 @@ export default {
     font-size: 20px;
 }
 
+.answer-feedback {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 100px;
+    margin-bottom: -415px;
+}
+
+.answer-feedback img {
+    max-width: 500px;
+    height: auto;
+}
+
+
 /*Progress Bar */
 .progress-bar {
-    width: 90%;
+    width: 40%;
     height: 20px;
     background-color: lightgray;
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: 20px;
     margin-top: 400px;
+    position: fixed;
 }
 
 .progress {
