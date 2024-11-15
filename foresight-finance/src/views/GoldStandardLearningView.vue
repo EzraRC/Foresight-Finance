@@ -8,7 +8,10 @@
     <div class="split right">
       <div class="accordion-container">
         <!-- Beginner Lessons Accordion -->
-        <button class="accordion">Beginner Lessons</button>
+        <button class="accordion" :class="{ locked: userExpLevel < 1 }" @click="toggleAccordion($event, 1)">
+          Beginner Lessons
+        </button>
+        <div v-if="userExpLevel < 1" class="tooltip-text">Complete the beginner lessons to unlock this section!</div>
         <div class="panel">
           <div v-if="hasBeginnerLessons">
             <div v-for="lesson in beginnerLessons" :key="lesson.id">
@@ -19,14 +22,13 @@
               </p>
             </div>
           </div>
-          <div v-else>
-            <p class="lesson-text">Oops, sorry! These lessons are either locked. Please complete the intermediate
-              lessons before moving on :)</p>
-          </div>
         </div>
 
         <!-- Intermediate Lessons Accordion -->
-        <button class="accordion">Intermediate Lessons</button>
+        <button class="accordion" :class="{ locked: userExpLevel < 2 }" @click="toggleAccordion($event, 2)">
+          Intermediate Lessons
+        </button>
+        <div v-if="userExpLevel < 2" class="tooltip-text">Complete the intermediate lessons to unlock this section!</div>
         <div class="panel">
           <div v-if="hasIntermediateLessons">
             <div v-for="lesson in intermediateLessons" :key="lesson.id">
@@ -37,14 +39,13 @@
               </p>
             </div>
           </div>
-          <div v-else>
-            <p class="lesson-text">Oops, sorry! These lessons are either locked. Please complete the intermediate
-              lessons before moving on :)</p>
-          </div>
         </div>
 
         <!-- Expert Lessons Accordion -->
-        <button class="accordion">Expert Lessons</button>
+        <button class="accordion" :class="{ locked: userExpLevel < 3 }" @click="toggleAccordion($event, 3)">
+          Expert Lessons
+        </button>
+        <div v-if="userExpLevel < 3" class="tooltip-text">Complete the expert lessons to unlock this section!</div>
         <div class="panel">
           <div v-if="hasExpertLessons">
             <div v-for="lesson in expertLessons" :key="lesson.id">
@@ -55,25 +56,32 @@
               </p>
             </div>
           </div>
-          <div v-else>
-            <p class="lesson-text">Oops, sorry! These lessons are either locked. Please complete the intermediate
-              lessons before moving on :)</p>
-          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 <script>
 import MultiSeriesPieChart from '@/components/MultiSeriesPieChart.vue';
-import { query, collection, getDocs, orderBy } from "firebase/firestore";
+import { query, collection, getDocs, orderBy, where } from "firebase/firestore";
 import { db } from '@/firebase';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'GoldStandardLearningView',
   components: {
     MultiSeriesPieChart,
+  },
+  data() {
+    return {
+      beginnerLessons: [],
+      intermediateLessons: [],
+      expertLessons: [],
+      userExpLevel: 0, // User's experience level
+      user: null, // User object
+      loading: true, // To handle the loading state
+    };
   },
   computed: {
     hasBeginnerLessons() {
@@ -84,64 +92,78 @@ export default {
     },
     hasExpertLessons() {
       return this.expertLessons.length > 0;
-    }
+    },
   },
-  data() {
-    return {
-      beginnerLessons: [],
-      intermediateLessons: [],
-      expertLessons: [],
-    };
+  mounted() {
+    // Call the method to check user and fetch data
+    this.fetchUserAndLessons();
   },
-  async mounted() {
-    try {
-      // Fetch lessons collection from Firebase
-      const lessonsCollection = query(collection(db, 'lessons'), orderBy("ID"));
-      const lessonSnapshot = await getDocs(lessonsCollection);
+  methods: {
+    async fetchUserAndLessons() {
+      const auth = getAuth();
+      const router = useRouter();
 
-      // Organize lessons by levelNeeded
-      const lessons = lessonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      this.beginnerLessons = lessons.filter(lesson => lesson.levelNeeded === 1);
-      this.intermediateLessons = lessons.filter(lesson => lesson.levelNeeded === 2);
-      this.expertLessons = lessons.filter(lesson => lesson.levelNeeded === 3);
-
-      console.log("Beginner Lessons:", this.beginnerLessons);
-      console.log("Intermediate Lessons:", this.intermediateLessons);
-      console.log("Expert Lessons:", this.expertLessons);
-    } catch (error) {
-      console.error("Error fetching lessons:", error);
-    }
-
-    // Accordion functionality
-    const acc = document.getElementsByClassName("accordion");
-    let activePanel = null; // Track the currently active panel
-
-    for (let i = 0; i < acc.length; i++) {
-      acc[i].addEventListener("click", function () {
-        // Close any currently open panel
-        if (activePanel && activePanel !== this.nextElementSibling) {
-          activePanel.style.maxHeight = null;
-          activePanel.previousElementSibling.classList.remove("active");
+      // Step 1: Check if user is authenticated first
+      onAuthStateChanged(auth, async (user) => {
+        console.log(user)
+        if (!user) {
+          // If the user is not logged in, redirect to the login page
+          router.push({ name: 'Login' });
+          return; // Stop execution if not logged in
         }
 
-        // Toggle the clicked panel
-        this.classList.toggle("active");
-        const panel = this.nextElementSibling;
+        // Step 2: User is logged in, store user information
+        this.user = user;
 
-        if (panel.style.maxHeight) {
-          // If the panel is already open, close it
-          panel.style.maxHeight = null;
-          activePanel = null;
-        } else {
-          // If the panel is closed, open it and set maxHeight dynamically
-          panel.style.maxHeight = panel.scrollHeight + "px";
-          activePanel = panel; // Update the active panel
+        try {
+          // Fetch the user's experience level from Firestore
+          const userQuery = query(collection(db, 'users'), where("UID", "==", user.uid));
+          const userQuerySnapshot = await getDocs(userQuery);
+
+          // Step 3: Check if the query found any document
+          if (!userQuerySnapshot.empty) {
+            const userDoc = userQuerySnapshot.docs[0]; // Get the first matching document
+            this.userExpLevel = userDoc.data().expLevel || 1; // Default to level 1 if no data
+          } else {
+            console.log('User document not found');
+            // Handle the case where the document doesn't exist, maybe create one
+          }
+          // Step 4: After verifying the user, fetch lessons
+          const lessonsCollection = query(collection(db, 'lessons'), orderBy("ID"));
+          const lessonSnapshot = await getDocs(lessonsCollection);
+
+          const lessons = lessonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          this.beginnerLessons = lessons.filter(lesson => lesson.levelNeeded === 1);
+          this.intermediateLessons = lessons.filter(lesson => lesson.levelNeeded === 2);
+          this.expertLessons = lessons.filter(lesson => lesson.levelNeeded === 3);
+
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        } finally {
+          // Step 5: Set loading to false after all data is fetched
+          this.loading = false;
         }
       });
-    }
-  }
+    },
+    toggleAccordion(event, requiredLevel) {
+      if (this.userExpLevel < requiredLevel) {
+        return; // Do nothing if the user lacks the required experience level
+      }
+
+      const button = event.target;
+      const panel = button.nextElementSibling;
+
+      button.classList.toggle('active');
+      if (panel.style.maxHeight) {
+        panel.style.maxHeight = null;
+      } else {
+        panel.style.maxHeight = panel.scrollHeight + 'px';
+      }
+    },
+  },
 };
 </script>
+
 
 <style scoped>
 .marble-background {
@@ -201,7 +223,7 @@ export default {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  min-width: 400px; 
+  min-width: 400px;
 }
 
 /* Accordion button styling */
@@ -270,5 +292,31 @@ export default {
 .active:after {
   content: "\2796";
   /* Change icon to minus when active */
+}
+
+
+
+/* Tooltip styling */
+.tooltip-text {
+  display: none;
+  position: absolute;
+  left: 0px; /* Position the tooltip to the left of the button */
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #333;
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  max-width: 200px;
+  box-sizing: border-box;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.accordion.locked:hover + .tooltip-text {
+  display: block;
+  opacity: 1;
 }
 </style>
