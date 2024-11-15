@@ -1,23 +1,26 @@
 <template>
     <!-- Show the loading screen when the page is not yet loaded -->
     <div v-if="isLoading" class="loading-screen">
-        <!-- Loading indicator -->
-        <div v-if="isLoading" class="loading-indicator">
+        <div class="loading-indicator">
             <img :src="require('@/assets/3d-models/gif-animations/loading.gif')" alt="Loading..." />
         </div>
     </div>
 
-    <!-- Show the actual content after loading is done -->
+    <!-- Authorized Content -->
     <div v-else-if="isAuthorized">
         <div class="marble-background">
             <div class="content-container">
                 <h1 class="video-title">Lesson {{ lessonTitle }}</h1>
                 <div class="iframe-container">
-                    <div v-html="videoUrl"></div> <!-- This will insert the iframe dynamically -->
+                    <div id="youtube-player"></div> <!-- Player container -->
+                    <div v-if="showTooltip" class="tooltip-container">
+                        <span class="tooltip">Seeking is disabled for this video.</span>
+                    </div>
                 </div>
                 <div class="quizButton-container">
-                    <router-link :to="{ name: 'QuizView', params: { lessonID: this.lessonId } }"><button>Ready to take
-                            the quiz?</button></router-link>
+                    <router-link :to="{ name: 'QuizView', params: { lessonID: this.lessonID } }">
+                        <button>Ready to take the quiz?</button>
+                    </router-link>
                 </div>
             </div>
         </div>
@@ -44,48 +47,126 @@ export default {
     data() {
         return {
             isAuthorized: false,
-            isLoading: true,  // New boolean flag to control loading state
+            isLoading: true,
             lessonID: null,
-            lessonTitle: '',
-            videoUrl: '',
+            lessonTitle: "",
+            videoId: "",
+            player: null,
+            validTime: [], // Tracks the valid playback range
+            showTooltip: false, // Tooltip visibility for seeking attempts
         };
     },
     methods: {
         async checkAuthAndLoadData() {
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
-                    // User is logged in, fetch the lesson data
                     this.isAuthorized = true;
                     try {
-                        const lessonId = this.$route.params.lessonID || '1';
-
-                        // Reference to the lesson document
-                        const lessonDocRef = doc(db, 'lessons', lessonId);
-
-                        // Fetch the lesson document
+                        const lessonId = this.$route.params.lessonID || "1";
+                        const lessonDocRef = doc(db, "lessons", lessonId);
                         const lessonDoc = await getDoc(lessonDocRef);
 
                         if (lessonDoc.exists()) {
                             const lessonData = lessonDoc.data();
                             this.lessonID = lessonData.ID;
                             this.lessonTitle = lessonData.title;
-                            this.videoUrl = lessonData.URL;
+                            this.videoId = this.extractVideoId(lessonData.URL);
+                            this.loadYouTubeAPI();
                         } else {
-                            console.error('No such document!');
+                            console.error("No such document!");
                         }
                     } catch (error) {
                         console.error("Error fetching lesson data:", error);
                     }
                 } else {
-                    // User is not logged in, show the not authorized page
                     this.isAuthorized = false;
                 }
-
-                // Data loading is done, set isLoading to false
                 this.isLoading = false;
             });
-        }
+        },
+        extractVideoId(url) {
+            const regExp = /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]+)/;
+            const match = url.match(regExp);
+            return match && match[1] ? match[1] : "";
+        },
+        loadYouTubeAPI() {
+            const script = document.createElement("script");
+            script.src = "https://www.youtube.com/iframe_api";
+            document.body.appendChild(script);
+            window.onYouTubeIframeAPIReady = this.initializeYouTubePlayer;
+        },
+        initializeYouTubePlayer() {
+            this.player = new YT.Player("youtube-player", {
+                height: "390",
+                width: "640",
+                videoId: this.videoId,
+                playerVars: {
+                    modestbranding: 1,
+                    controls: 1,
+                    disablekb: 1,
+                    enablejsapi: 1 // Ensure API is enabled for further controls
+                },
+                events: {
+                    onReady: this.onPlayerReady,
+                    onStateChange: this.onPlayerStateChange,
+                },
+            });
+        },
+        onPlayerReady() {
+            this.updateValidTime();
+            this.player.playVideo();
+
+            // Add an event listener to the video player container to disable mouse scrubbing
+            const videoContainer = document.getElementById('youtube-player');
+            videoContainer.addEventListener('mousedown', this.preventSeekingOnPause);
+        },
+        // Prevent seeking when the video is paused
+        preventSeekingOnPause(event) {
+
+            const currentState = this.player.getPlayerState();
+            console.log("preventseekingonpause called", event)
+            console.log("current state", currentState)
+            if (currentState === YT.PlayerState.PAUSED) {
+                // If the player is paused, prevent the user from scrubbing
+                const currentTime = this.player.getCurrentTime();
+                this.player.seekTo(Math.max(...this.validTime)); // Reset to valid time
+            }
+        },
+        onPlayerStateChange(event) {
+            const currentTime = this.player.getCurrentTime();
+
+            if (event.data === YT.PlayerState.PLAYING) {
+                // When the video is playing, update valid time
+                this.updateValidTime();
+            }
+
+            if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.SEEKING) {
+                // If the video is paused or seeking
+                const attemptedTime = this.player.getCurrentTime();
+
+                // Prevent seeking ahead if the time is beyond the valid range
+                if (attemptedTime > Math.max(...this.validTime)) {
+                    this.showTooltip = true;
+                    this.player.seekTo(Math.max(...this.validTime)); // Reset to last valid time
+                    setTimeout(() => (this.showTooltip = false), 3000);
+                }
+            }
+        },
+        updateValidTime() {
+            setInterval(() => {
+                if (
+                    this.player &&
+                    this.player.getPlayerState() === YT.PlayerState.PLAYING
+                ) {
+                    const currentTime = Math.floor(this.player.getCurrentTime());
+                    if (!this.validTime.includes(currentTime)) {
+                        this.validTime.push(currentTime);
+                    }
+                }
+            }, 1000);
+        },
     },
+
     mounted() {
         this.checkAuthAndLoadData();
     }
@@ -275,15 +356,43 @@ h1 {
 
 
 .loading-indicator {
-  color: white;
-  font-size: 40px;
-  text-align: center;
-  height: 600px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 70px;
-  margin-bottom: -18px;
+    color: white;
+    font-size: 40px;
+    text-align: center;
+    height: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 70px;
+    margin-bottom: -18px;
+}
+
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.tooltip {
+    visibility: hidden;
+    background-color: #555;
+    color: white;
+    text-align: center;
+    padding: 5px;
+    border-radius: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -20px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    width: 180px;
+}
+
+.tooltip-container .tooltip {
+    visibility: visible;
+    opacity: 1;
 }
 
 @keyframes fadeInSlideUp {
