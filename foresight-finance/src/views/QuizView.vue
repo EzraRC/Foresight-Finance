@@ -11,7 +11,7 @@
             <h1 v-if="!isAnswerCorrect" class="feedback-text incorrect">Incorrect</h1>
             <img v-if="isAnswerCorrect" src="../assets/3d-models/gif-animations/bull.gif" alt="Correct Answer" class="feedback-gif" />
             <img v-if="!isAnswerCorrect" src="../assets/3d-models/gif-animations/bear.gif" alt="Incorrect Answer" class="feedback-gif" />
-            <button class="next-button" @click="proceedToNextQuestion">Next Question</button>
+            <button class="next-button" @click="proceedToNextQuestion">Next</button>
         </div>
 
         <!-- Left side of the screen -->
@@ -49,6 +49,12 @@
                 <h1 class="final-score">Your Final Score: {{ finalScore }}%</h1>
                 <p class="final-score-reminder">If you did not pass the quiz, don't worry! We only keep your highest
                     passing score!</p>
+                    <!-- Conditional button for redirection -->
+                <button v-if="quizCompleted" 
+                        @click="redirectToPage"
+                        class="redirect-button">
+                    {{ isPassed ? 'Continue to GSLearning' : 'Retry the Video Lesson' }}
+                </button>
             </div>
             <div v-if="!quizCompleted">
                 <button v-for="(answer, index) in randomizedAnswers" :key="index" class="answer-button"
@@ -88,11 +94,14 @@ export default {
     computed: {
         progressPercentage() {
             if (!this.totalNumberOfQuestions) return 0;
-            return (this.questionNumber / this.totalNumberOfQuestions) * 100;
+            return ((this.questionNumber / this.totalNumberOfQuestions) * 100) - 10;
         },
         finalScore() {
             // Calculate the score percentage (if quiz is completed)
             return this.quizCompleted ? ((this.score / this.totalNumberOfQuestions) * 100).toFixed(2) : 0;
+        },
+        isPassed() {
+            return this.finalScore >= this.lessonData.passingGrade * 100;
         },
     },
     methods:
@@ -216,6 +225,18 @@ export default {
             }
         },
 
+        redirectToPage() {
+        // Check if the user passed the quiz
+        const userPassed = this.finalScore / 100 >= this.lessonData.passingGrade;
+
+        // Redirect to the appropriate page
+        if (userPassed) {
+            this.$router.push('/GSlearning'); // Redirect to the GSLearning page
+        } else {
+            this.$router.back(); // Go back to video page
+        }
+    },
+
         proceedToNextQuestion() {
             this.isAnswerCorrect = null;
             this.showFeedback = false;
@@ -291,6 +312,7 @@ export default {
 
 .final-score-reminder {
     color: #fff;
+    margin-top: 10px;
 }
 
 .final-score-gifs {
@@ -488,6 +510,22 @@ export default {
     min-height: 100%;
     min-width: 100%;
     background-color: #02355A;
+}
+
+.redirect-button {
+    margin-top: 20px;
+    padding: 15px 30px;
+    font-size: 18px;
+    background-color: rgba(236, 172, 32, 1);
+    color: black;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.redirect-button:hover {
+    background-color: rgb(214, 156, 30);
 }
 
 @keyframes fadeIn {
