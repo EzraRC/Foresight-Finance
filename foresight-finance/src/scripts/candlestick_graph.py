@@ -145,7 +145,7 @@ def generate_chart_with_patterns():
     print("find max min")
     try:
         smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
-        price_max_indices, price_min_indices, max_min, max_min_types = pr.find_max_min(prices)  # Find max and min prices
+        max_candidates, min_candidates, max_min, max_min_types = pr.find_max_min(prices, two = 2) #FInd max and min of prices to smooth it    
         print("patterns")
         patterns = pr.find_patterns(max_min, max_min_types)  # Find patterns
 
