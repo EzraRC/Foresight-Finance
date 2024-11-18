@@ -17,6 +17,15 @@
                         <span class="tooltip">Seeking is disabled for this video.</span>
                     </div>
                 </div>
+
+                <!-- Controls Section -->
+                <div class="controls-container">
+                    <button @click="goBack10Seconds" class="control-button">Go Back 10s</button>
+                    <button @click="togglePause" class="control-button">
+                        {{ isPaused ? "Play" : "Pause" }}
+                    </button>
+                </div>
+
                 <div class="quizButton-container">
                     <router-link :to="{ name: 'QuizView', params: { lessonID: this.lessonID } }">
                         <button>Ready to take the quiz?</button>
@@ -54,6 +63,7 @@ export default {
             player: null,
             validTime: [], // Tracks the valid playback range
             showTooltip: false, // Tooltip visibility for seeking attempts
+            isPaused: false, // Track the pause state
         };
     },
     methods: {
@@ -102,9 +112,9 @@ export default {
                 videoId: this.videoId,
                 playerVars: {
                     modestbranding: 1,
-                    controls: 1,
+                    controls: 0, // Disable controls (we'll add custom controls)
                     disablekb: 1,
-                    enablejsapi: 1 // Ensure API is enabled for further controls
+                    enablejsapi: 1, // Ensure API is enabled for further controls
                 },
                 events: {
                     onReady: this.onPlayerReady,
@@ -115,49 +125,29 @@ export default {
         onPlayerReady() {
             this.updateValidTime();
             this.player.playVideo();
-
-            // Add an event listener to the video player container to disable mouse scrubbing
-            const videoContainer = document.getElementById('youtube-player');
-            videoContainer.addEventListener('mousedown', this.preventSeekingOnPause);
-        },
-        // Prevent seeking when the video is paused
-        preventSeekingOnPause(event) {
-
-            const currentState = this.player.getPlayerState();
-            console.log("preventseekingonpause called", event)
-            console.log("current state", currentState)
-            if (currentState === YT.PlayerState.PAUSED) {
-                // If the player is paused, prevent the user from scrubbing
-                const currentTime = this.player.getCurrentTime();
-                this.player.seekTo(Math.max(...this.validTime)); // Reset to valid time
-            }
+            this.isPaused = false;
         },
         onPlayerStateChange(event) {
-            const currentTime = this.player.getCurrentTime();
-
-            if (event.data === YT.PlayerState.PLAYING) {
-                // When the video is playing, update valid time
-                this.updateValidTime();
+            if (event.data === YT.PlayerState.PAUSED) {
+                this.isPaused = true;
+            } else {
+                this.isPaused = false;
             }
-
-            if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.SEEKING) {
-                // If the video is paused or seeking
-                const attemptedTime = this.player.getCurrentTime();
-
-                // Prevent seeking ahead if the time is beyond the valid range
-                if (attemptedTime > Math.max(...this.validTime)) {
-                    this.showTooltip = true;
-                    this.player.seekTo(Math.max(...this.validTime)); // Reset to last valid time
-                    setTimeout(() => (this.showTooltip = false), 3000);
-                }
+        },
+        goBack10Seconds() {
+            const currentTime = this.player.getCurrentTime();
+            this.player.seekTo(currentTime - 10, true);
+        },
+        togglePause() {
+            if (this.isPaused) {
+                this.player.playVideo();
+            } else {
+                this.player.pauseVideo();
             }
         },
         updateValidTime() {
             setInterval(() => {
-                if (
-                    this.player &&
-                    this.player.getPlayerState() === YT.PlayerState.PLAYING
-                ) {
+                if (this.player && this.player.getPlayerState() === YT.PlayerState.PLAYING) {
                     const currentTime = Math.floor(this.player.getCurrentTime());
                     if (!this.validTime.includes(currentTime)) {
                         this.validTime.push(currentTime);
@@ -169,9 +159,10 @@ export default {
 
     mounted() {
         this.checkAuthAndLoadData();
-    }
-}
+    },
+};
 </script>
+
 
 <style>
 body {
@@ -254,7 +245,15 @@ h1 {
 }
 
 .quizButton-container button {
-    background-color: #e3b130;
+    background: linear-gradient(90deg, rgba(186, 148, 62, 1) 0%, rgba(236, 172, 32, 1) 20%, rgba(186, 148, 62, 1) 39%, rgba(249, 244, 180, 1) 50%, rgba(186, 148, 62, 1) 60%, rgba(236, 172, 32, 1) 80%, rgba(186, 148, 62, 1) 100%);
+    text-transform: uppercase;
+    line-height: 1;
+    text-align: center;
+    color: #000;
+    animation: shine 3s infinite ease-in-out;
+    background-size: 200%;
+    background-position: left;
+
     margin-bottom: 30px;
     padding: 10px 20px;
     /* Adjust padding as needed */
@@ -393,6 +392,37 @@ h1 {
 .tooltip-container .tooltip {
     visibility: visible;
     opacity: 1;
+}
+
+.controls-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.control-button {
+    padding: 10px 20px;
+    background-color: #e3b130;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+.control-button:hover {
+    background-color: #c79a1f;
+}
+
+@keyframes shine {
+    from {
+        background-position: -10%;
+    }
+
+    to {
+        background-position: 110%
+    }
+
 }
 
 @keyframes fadeInSlideUp {
