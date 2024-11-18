@@ -12,8 +12,10 @@
             <h1 v-else class="feedback-text incorrect">Incorrect</h1>
 
             <!-- Display GIF based on correctness -->
-            <img v-if="isAnswerCorrect" src="../assets/3d-models/gif-animations/bull.gif" alt="Correct Answer" class="feedback-gif" />
-            <img v-if="!isAnswerCorrect" src="../assets/3d-models/gif-animations/bear.gif" alt="Incorrect Answer" class="feedback-gif" />
+            <img v-if="isAnswerCorrect" src="../assets/3d-models/gif-animations/bull.gif" alt="Correct Answer"
+                class="feedback-gif" />
+            <img v-if="!isAnswerCorrect" src="../assets/3d-models/gif-animations/bear.gif" alt="Incorrect Answer"
+                class="feedback-gif" />
 
             <!-- Feedback Message -->
             <p class="feedback-text">{{ feedbackMessage }}</p>
@@ -34,7 +36,7 @@
                     <img src="../assets/3d-models/gif-animations/bear.gif" alt="bear">
                 </div>
             </div>
-            
+
             <!-- Displaying the final score when all questions are answered -->
             <h3 v-if="quizData.length > 0 && !quizCompleted" class="question-number">
                 Question {{ questionNumber }} of {{ totalNumberOfQuestions }}
@@ -57,10 +59,8 @@
                 <h1 class="final-score">Your Final Score: {{ finalScore }}%</h1>
                 <p class="final-score-reminder">If you did not pass the quiz, don't worry! We only keep your highest
                     passing score!</p>
-                    <!-- Conditional button for redirection -->
-                <button v-if="quizCompleted" 
-                        @click="redirectToPage"
-                        class="redirect-button">
+                <!-- Conditional button for redirection -->
+                <button v-if="quizCompleted" @click="redirectToPage" class="redirect-button">
                     {{ isPassed ? 'Continue to GSLearning' : 'Retry the Video Lesson' }}
                 </button>
             </div>
@@ -117,7 +117,6 @@ export default {
     {
         async getQuizData() {
             try {
-                console.log("Route Parameter (lessonId):", this.lessonId);
 
                 // Reference to the lesson document
                 const lessonRef = doc(db, "lessons", this.lessonId);
@@ -127,7 +126,6 @@ export default {
                 } else {
                     console.error('No such document!');
                 }
-                console.log(this.lessonData.passingGrade)
 
 
                 // Reference to the quiz subcollection within the lesson document
@@ -151,8 +149,8 @@ export default {
                     .sort((a, b) => a.order - b.order);  // Sort by 'order' field
 
                 this.isLoading = false
-                console.log("Complete Quiz Data Array:", this.quizData);
-                console.log(this.quizData[0])
+                // console.log("Complete Quiz Data Array:", this.quizData);
+                // console.log(this.quizData[0])
                 //First question is loaded
                 // Initialize question number and total questions only if quizData is not empty
                 if (this.quizData.length > 0) {
@@ -178,7 +176,14 @@ export default {
             else {
                 this.isAnswerCorrect = false;
                 this.showFeedback = true;
-                this.feedbackMessage = "long explanation here based on the user's answer choice";
+                // this.feedbackMessage = "long explanation here based on the user's answer choice";
+                for (let i = 0; i < this.randomizedAnswers.length; i++) {
+                    console.log(this.randomizedAnswers[i] != null)
+                    if (this.randomizedAnswers[i] != null && selectedAnswer == this.randomizedAnswers[i]) {
+                        this.feedbackMessage = this.randomizedFeedback[i].slice(11);
+                        break;
+                    }
+                }
                 //this.feedbackMessage = currentQuestion.incorrectFeedback;
             }
 
@@ -238,16 +243,16 @@ export default {
         },
 
         redirectToPage() {
-        // Check if the user passed the quiz
-        const userPassed = this.finalScore / 100 >= this.lessonData.passingGrade;
+            // Check if the user passed the quiz
+            const userPassed = this.finalScore / 100 >= this.lessonData.passingGrade;
 
-        // Redirect to the appropriate page
-        if (userPassed) {
-            this.$router.push('/GSlearning'); // Redirect to the GSLearning page
-        } else {
-            this.$router.back(); // Go back to video page
-        }
-    },
+            // Redirect to the appropriate page
+            if (userPassed) {
+                this.$router.push('/GSlearning'); // Redirect to the GSLearning page
+            } else {
+                this.$router.back(); // Go back to video page
+            }
+        },
 
         proceedToNextQuestion() {
             this.isAnswerCorrect = null;
@@ -259,21 +264,35 @@ export default {
 
             // Randomly select three incorrect answers
             const incorrectAnswers = [...currentQuestion.incorrectAnswers];
+            const incorrectFeedback = [...currentQuestion.incorrectFeedback];
             const selectedIncorrectAnswers = [];
+            const selectedIncorrectFeedback = [];
             while (selectedIncorrectAnswers.length < 3 && incorrectAnswers.length > 0) {
                 const randomIndex = Math.floor(Math.random() * incorrectAnswers.length);
                 selectedIncorrectAnswers.push(incorrectAnswers.splice(randomIndex, 1)[0]);
+                selectedIncorrectFeedback.push(incorrectFeedback.splice(randomIndex, 1)[0]);
             }
 
-            // Combine the correct answer with the selected incorrect answers
-            const allAnswers = [currentQuestion.correctAnswer, ...selectedIncorrectAnswers];
+            // Combine correct answer and selected incorrect answers with feedback
+            const allAnswersWithFeedback = [
+                { answer: currentQuestion.correctAnswer, feedback: null },
+                ...selectedIncorrectAnswers.map((answer, index) => ({
+                    answer,
+                    feedback: selectedIncorrectFeedback[index],
+                })),
+            ];
 
             // Shuffle the combined answers
-            this.randomizedAnswers = allAnswers
-                .map(value => ({ value, sort: Math.random() }))
+            const shuffledAnswersWithFeedback = allAnswersWithFeedback
+                .map(item => ({ ...item, sort: Math.random() }))
                 .sort((a, b) => a.sort - b.sort)
-                .map(({ value }) => value);
+                .map(({ answer, feedback }) => ({ answer, feedback }));
+
+            // Extract the answers and feedback into separate arrays
+            this.randomizedAnswers = shuffledAnswersWithFeedback.map(item => item.answer);
+            this.randomizedFeedback = shuffledAnswersWithFeedback.map(item => item.feedback);
         },
+
     },
     async mounted() {
 
@@ -353,11 +372,13 @@ export default {
 }
 
 .correct {
-    color: #4caf50; /* Green color for correct answers */
+    color: #4caf50;
+    /* Green color for correct answers */
 }
 
 .incorrect {
-    color: #f44336; /* Red color for incorrect answers */
+    color: #f44336;
+    /* Red color for incorrect answers */
 }
 
 .split {
@@ -443,6 +464,7 @@ export default {
     margin-right: 20px;
     font-size: 20px;
 }
+
 .feedback-gif {
     margin-right: 800px;
     scale: 2.0;
@@ -541,7 +563,12 @@ export default {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 </style>
