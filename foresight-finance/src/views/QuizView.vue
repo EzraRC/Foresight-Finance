@@ -5,12 +5,20 @@
             <img :src="require('@/assets/3d-models/gif-animations/loading.gif')" alt="Loading..." />
         </div>
 
-        <!-- Feedback GIF and text based on answer correctness -->
+        <!-- Feedback Section -->
         <div v-if="showFeedback" class="answer-feedback">
+            <!-- Display Correct or Incorrect Message -->
             <h1 v-if="isAnswerCorrect" class="feedback-text correct">Correct</h1>
-            <h1 v-if="!isAnswerCorrect" class="feedback-text incorrect">Incorrect</h1>
+            <h1 v-else class="feedback-text incorrect">Incorrect</h1>
+
+            <!-- Display GIF based on correctness -->
             <img v-if="isAnswerCorrect" src="../assets/3d-models/gif-animations/bull.gif" alt="Correct Answer" class="feedback-gif" />
             <img v-if="!isAnswerCorrect" src="../assets/3d-models/gif-animations/bear.gif" alt="Incorrect Answer" class="feedback-gif" />
+
+            <!-- Feedback Message -->
+            <p class="feedback-text">{{ feedbackMessage }}</p>
+
+            <!-- Next Button -->
             <button class="next-button" @click="proceedToNextQuestion">Next</button>
         </div>
 
@@ -86,6 +94,7 @@ export default {
             lessonData: [],
             isAnswerCorrect: null,
             showFeedback: false,
+            feedbackMessage: '',
         };
     },
     async created() {
@@ -164,10 +173,13 @@ export default {
                 this.score += 1;
                 this.isAnswerCorrect = true;
                 this.showFeedback = true;
+                this.feedbackMessage = 'Good job! :)';
             }
             else {
                 this.isAnswerCorrect = false;
                 this.showFeedback = true;
+                this.feedbackMessage = "long explanation here based on the user's answer choice";
+                //this.feedbackMessage = currentQuestion.incorrectFeedback;
             }
 
             // Move to the next question or end the quiz
