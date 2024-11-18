@@ -50,15 +50,24 @@
         <!-- Modal for displaying the favorites list -->
         <div v-if="isFavoritesModalOpen" class="modal-overlay" @click.self="closeFavoritesModal">
           <div class="modal-content">
-            <h2>Your Favorites List</h2>
-            <p>Here you can display the user's saved favorite stocks or patterns.</p>
-            <!-- Example: Display list of favorite stock symbols -->
-            <ul>
-              <li v-for="(favorite, index) in favoritesList" :key="index">{{ favorite }}</li>
-            </ul>
+            <h2>Favorites List</h2>
+            <div v-if="isUserLoggedIn">
+              <ul v-if="favoritesList.length > 0">
+                <li v-for="(favorite, index) in favoritesList" :key="index">{{ favorite }}</li>
+              </ul>
+              <div v-else>No stocks in your watchlist yet.</div>
+            </div>
+            <div v-else>
+              Oops! It appears that you are not logged in on Foresight Finance.
+              <a :href="loginUrl" style="color: #4ea1f3; text-decoration: underline;">
+                Click here to login to access the favorites list
+              </a>
+            </div>
             <button @click="closeFavoritesModal">Close</button>
           </div>
         </div>
+
+
 
         <!-- Modal for displaying acronyms and their explanations -->
         <div v-if="isAcronymModalOpen" class="modal-overlay" @click.self="closeAcronymModal">
@@ -108,7 +117,7 @@
 
     <!-- Countdown timer for refreshing the graph -->
     <div v-if="!enablePatternRecognition" class="refresh-timer">
-  Refreshing in: {{ countdown }} seconds
+      Refreshing in: {{ countdown }} seconds
     </div>
 
 
@@ -134,6 +143,11 @@
 </template>
 
 <script>
+//imports
+import { getAuth } from 'firebase/auth';
+import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
+import { auth, db } from '@/firebase';
+
 export default {
   name: 'AIPatternRecognizerView',
   data() {
@@ -147,18 +161,55 @@ export default {
       countdown: 60,
       refreshInterval: null,
       isModalOpen: false,
-      stockData: '', // Holds stock data from the file
+      stockData: '',
       stockSymbols: [],
-      acronymKey: '', // Holds the content of the acronym key file
-      isAcronymModalOpen: false, // Controls the acronym key modal
-      isFavoritesModalOpen: false, // Controls the favorites modal
+      acronymKey: '',
+      isAcronymModalOpen: false,
+      isFavoritesModalOpen: false,
+      favoritesList: [],
+      isUserLoggedIn: false,
+      loginUrl: '',
+      user: null,
     };
   },
   created() {
     this.fetchStockSymbols(); // Fetch symbols when component is created
     this.fetchAcronymKey();
+    this.fetchWatchlist();
   },
   methods: {  
+
+    async fetchWatchlist() {
+  const user = auth.currentUser;
+
+  // Check if the user is logged in
+  if (user) {
+    this.isUserLoggedIn = true;
+    try {
+      // Reference to the users collection
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('UID', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+
+      // Check if a matching document was found
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const userData = userDoc.data();
+
+        // Access the watchList array if it exists
+        this.favoritesList = userData.watchList || [];
+      } else {
+        console.warn("No user document found for UID:", user.uid);
+        this.favoritesList = [];
+      }
+    } catch (error) {
+      console.error('Error fetching watchlist:', error);
+    }
+  } else {
+    this.isUserLoggedIn = false;
+    this.loginUrl = "http://localhost:8081/#/LoginSignUp";
+  }
+},
     async fetchAcronymKey() {
   try {
     const response = await fetch('http://127.0.0.1:5000/src/static/acronym_key.txt');
@@ -203,8 +254,19 @@ export default {
   },
 
   openFavoritesModal() {
-    this.isFavoritesModalOpen = true;
-  },
+  const auth = getAuth();
+  const user = auth.currentUser;
+  this.isFavoritesModalOpen = true;
+
+  if (user) {
+    this.isUserLoggedIn = true;
+    this.fetchWatchlist();
+  } else {
+    this.isUserLoggedIn = false;
+    this.loginUrl = "http://localhost:8081/#/LoginSignUp";
+  }
+},
+
   closeFavoritesModal() {
     this.isFavoritesModalOpen = false;
   },
