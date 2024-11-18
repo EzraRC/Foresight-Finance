@@ -32,6 +32,12 @@
           Need help with the patterns? Click here!
         </a>
 
+        <!-- Hyperlink to open modal with favorites list -->
+        <a href="javascript:void(0)" @click="openFavoritesModal" class="trending-link" style="margin-right: 20px;">
+          Click here for your favorites list!
+        </a>
+
+
         <!-- Toggle checkbox for pattern recognition -->
         <div class="pattern-recognition-bubble">
           <label for="toggle" class="pattern-label">Enable pattern recognition</label>
@@ -39,6 +45,19 @@
                   <input type="checkbox" id="toggle" v-model="enablePatternRecognition" @change="togglePatternRecognition"/>
                   <label for="toggle"></label>
                 </div>
+        </div>
+
+        <!-- Modal for displaying the favorites list -->
+        <div v-if="isFavoritesModalOpen" class="modal-overlay" @click.self="closeFavoritesModal">
+          <div class="modal-content">
+            <h2>Your Favorites List</h2>
+            <p>Here you can display the user's saved favorite stocks or patterns.</p>
+            <!-- Example: Display list of favorite stock symbols -->
+            <ul>
+              <li v-for="(favorite, index) in favoritesList" :key="index">{{ favorite }}</li>
+            </ul>
+            <button @click="closeFavoritesModal">Close</button>
+          </div>
         </div>
 
         <!-- Modal for displaying acronyms and their explanations -->
@@ -132,6 +151,7 @@ export default {
       stockSymbols: [],
       acronymKey: '', // Holds the content of the acronym key file
       isAcronymModalOpen: false, // Controls the acronym key modal
+      isFavoritesModalOpen: false, // Controls the favorites modal
     };
   },
   created() {
@@ -182,6 +202,13 @@ export default {
     this.fetchAcronymKey();
   },
 
+  openFavoritesModal() {
+    this.isFavoritesModalOpen = true;
+  },
+  closeFavoritesModal() {
+    this.isFavoritesModalOpen = false;
+  },
+  
   async fetchStockSymbols() {
     try {
       const response = await fetch('http://127.0.0.1:5000/src/static/stock_data.txt');
