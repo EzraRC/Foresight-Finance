@@ -543,7 +543,7 @@ export default {
     z-index: 2;
     min-height: 100%;
     min-width: 100%;
-    background-color: #02355A;
+    
 }
 
 .redirect-button {

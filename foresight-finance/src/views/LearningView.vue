@@ -245,22 +245,23 @@ h1 {
 }
 
 .quizButton-container button {
+    padding: 10px 20px;
+    background-color: #9b7a26;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    margin-bottom: 30px;
+}
+
+.quizButton-container button:hover {
     background: linear-gradient(90deg, rgba(186, 148, 62, 1) 0%, rgba(236, 172, 32, 1) 20%, rgba(186, 148, 62, 1) 39%, rgba(249, 244, 180, 1) 50%, rgba(186, 148, 62, 1) 60%, rgba(236, 172, 32, 1) 80%, rgba(186, 148, 62, 1) 100%);
-    text-transform: uppercase;
     line-height: 1;
     text-align: center;
     color: #000;
     animation: shine 3s infinite ease-in-out;
     background-size: 200%;
     background-position: left;
-
-    margin-bottom: 30px;
-    padding: 10px 20px;
-    /* Adjust padding as needed */
-    font-size: 16px;
-    /* Font size for the button */
-    cursor: pointer;
-    /* Show pointer cursor on hover */
 }
 
 
@@ -271,8 +272,6 @@ h1 {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color: #f5f5f5;
-    color: #333;
 }
 
 .loading-screen h1 {
@@ -329,7 +328,7 @@ h1 {
 
 
 .login-button {
-    background-color: #e3b130;
+    background-color: #e3b03000;
     border: none;
     outline: none;
     color: black !important;
@@ -403,7 +402,7 @@ h1 {
 
 .control-button {
     padding: 10px 20px;
-    background-color: #e3b130;
+    background-color: #9b7a26;
     border: none;
     cursor: pointer;
     font-size: 16px;
