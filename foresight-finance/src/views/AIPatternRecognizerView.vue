@@ -155,7 +155,7 @@
 <script>
 //imports
 import { getAuth } from 'firebase/auth';
-import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, where, doc, getDoc, setDoc, updateDoc  } from 'firebase/firestore';
 import { auth, db } from '@/firebase';
 
 export default {
@@ -315,13 +315,57 @@ async openSymbolsModal() {
       }
     },
 
-    toggleFavorite(symbol) {
-    if (this.watchList.includes(symbol)) {
-      this.watchList = this.watchList.filter((item) => item !== symbol);
-    } else {
-      this.watchList.push(symbol);
+    async toggleFavorite(symbol) {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.error("No user is logged in.");
+        return;
     }
-  },
+
+    const uid = user.uid;
+
+    try {
+        // Query the users collection to find the document with the matching UID field
+        const usersQuery = query(collection(db, "users"), where("UID", "==", uid));
+        const querySnapshot = await getDocs(usersQuery);
+
+        if (!querySnapshot.empty) {
+            // Assume there's only one document per UID
+            const userDoc = querySnapshot.docs[0];
+            const userRef = doc(db, "users", userDoc.id); // Use the document ID for updates
+            const data = userDoc.data();
+            const watchList = data.watchList || [];
+
+            if (watchList.includes(symbol)) {
+                // Remove the symbol from the watchlist
+                const updatedWatchList = watchList.filter(item => item !== symbol);
+                await updateDoc(userRef, {
+                    watchList: updatedWatchList
+                });
+                console.log(`Removed ${symbol} from watchlist.`);
+            } else {
+                // Add the symbol to the watchlist
+                const updatedWatchList = [...watchList, symbol];
+                await updateDoc(userRef, {
+                    watchList: updatedWatchList
+                });
+                console.log(`Added ${symbol} to watchlist.`);
+            }
+        } else {
+            // No document found for the user, create a new one
+            const newUserRef = doc(collection(db, "users"));
+            await setDoc(newUserRef, {
+                UID: uid,
+                watchList: [symbol]
+            });
+            console.log(`Created new user document and added ${symbol} to watchlist.`);
+        }
+    } catch (error) {
+        console.error("Error updating watchlist:", error);
+    }
+},
 
   closeFavoritesModal() {
     this.isFavoritesModalOpen = false;
