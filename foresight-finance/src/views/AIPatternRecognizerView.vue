@@ -264,28 +264,60 @@ export default {
   },
 
   async openFavoritesModal() {
-      this.isFavoritesModalOpen = true; // Set the "Favorites List" modal to open
+    this.isFavoritesModalOpen = true; // Set the "Favorites List" modal to open
 
-      const user = auth.currentUser;
+    const auth = getAuth();
+    const user = auth.currentUser;
 
-      if (user) {
+    if (user) {
         try {
-          // Fetch user's watch list
-          const usersRef = collection(db, 'users');
-          const q = query(usersRef, where('UID', '==', user.uid));
-          const querySnapshot = await getDocs(q);
+            // Query the users collection to find the document with the matching UID field
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('UID', '==', user.uid));
+            const querySnapshot = await getDocs(q);
 
-          if (!querySnapshot.empty) {
-            const userDoc = querySnapshot.docs[0];
-            this.watchList = userDoc.data().watchList || []; // Populate watch list
-          }
+            if (!querySnapshot.empty) {
+                const userDoc = querySnapshot.docs[0];
+                this.watchList = userDoc.data().watchList || []; // Populate watch list
+                console.log("Favorites list loaded:", this.watchList);
+            } else {
+                console.log("No favorites found for the user.");
+                this.watchList = []; // Reset the watch list if no document is found
+            }
         } catch (error) {
-          console.error('Error opening favorites modal:', error);
+            console.error('Error opening favorites modal:', error);
         }
-      } else {
+    } else {
         console.error('Please log in to view your favorites.');
-      }
-    },
+    }
+},
+
+async refreshWatchList() {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user) {
+        try {
+            // Query the users collection to find the document with the matching UID field
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('UID', '==', user.uid));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const userDoc = querySnapshot.docs[0];
+                this.watchList = userDoc.data().watchList || [];
+                console.log("Favorites list refreshed:", this.watchList);
+            } else {
+                console.log("No favorites found for the user.");
+                this.watchList = [];
+            }
+        } catch (error) {
+            console.error('Error refreshing favorites list:', error);
+        }
+    } else {
+        console.error('Please log in to refresh your favorites.');
+    }
+},
 
 async openSymbolsModal() {
       this.isModalOpen = true; // Set the "Stock Symbols" modal to open
@@ -353,6 +385,8 @@ async openSymbolsModal() {
                 });
                 console.log(`Added ${symbol} to watchlist.`);
             }
+            // Refresh the watch list after the update
+            await this.refreshWatchList();
         } else {
             // No document found for the user, create a new one
             const newUserRef = doc(collection(db, "users"));
@@ -361,6 +395,8 @@ async openSymbolsModal() {
                 watchList: [symbol]
             });
             console.log(`Created new user document and added ${symbol} to watchlist.`);
+            // Refresh the watch list after the update
+            await this.refreshWatchList();
         }
     } catch (error) {
         console.error("Error updating watchlist:", error);
