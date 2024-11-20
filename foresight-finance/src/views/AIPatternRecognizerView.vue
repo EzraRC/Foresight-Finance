@@ -123,10 +123,20 @@
 
     <!-- Modal for displaying stock symbols i got it from https://gretlcycu.wordpress.com/wp-content/uploads/2013/08/quick-ticker-symbol-list.pdf -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-content">
-        <h2>Stock Symbols & Company Names</h2>
-        <ul>
+  <div class="modal-content">
+    <h2>Stock Symbols & Company Names</h2>
+    <ul>
       <li v-for="(company, index) in stockSymbols" :key="index">
+        <!-- Heart button for marking favorites -->
+        <button
+          class="heart-button"
+          :style="{ color: watchList.includes(company.symbol) ? 'navy' : 'gray' }"
+          @click="toggleFavorite(company.symbol)"
+        >
+          ❤
+        </button>
+
+        <!-- Stock symbol and company name -->
         <a 
           href="javascript:void(0)" 
           @click="selectSymbol(company.symbol)"
@@ -136,9 +146,9 @@
         - {{ company?.name || 'Unknown Company' }}
       </li>
     </ul>
-        <button @click="closeModal">Close</button>
-      </div>
-    </div>
+    <button @click="closeModal">Close</button>
+  </div>
+</div>
   </div>
 </template>
 
@@ -160,13 +170,13 @@ export default {
       refreshing: false,
       countdown: 60,
       refreshInterval: null,
-      isModalOpen: false,
       stockData: '',
       stockSymbols: [],
       acronymKey: '',
+      isModalOpen: false,
       isAcronymModalOpen: false,
       isFavoritesModalOpen: false,
-      favoritesList: [],
+      watchList: [],
       isUserLoggedIn: false,
       loginUrl: '',
       user: null,
@@ -253,19 +263,65 @@ export default {
     this.fetchAcronymKey();
   },
 
-  openFavoritesModal() {
-  const auth = getAuth();
-  const user = auth.currentUser;
-  this.isFavoritesModalOpen = true;
+  async openFavoritesModal() {
+      this.isFavoritesModalOpen = true; // Set the "Favorites List" modal to open
 
-  if (user) {
-    this.isUserLoggedIn = true;
-    this.fetchWatchlist();
-  } else {
-    this.isUserLoggedIn = false;
-    this.loginUrl = "http://localhost:8081/#/LoginSignUp";
-  }
-},
+      const user = auth.currentUser;
+
+      if (user) {
+        try {
+          // Fetch user's watch list
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('UID', '==', user.uid));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            this.watchList = userDoc.data().watchList || []; // Populate watch list
+          }
+        } catch (error) {
+          console.error('Error opening favorites modal:', error);
+        }
+      } else {
+        console.error('Please log in to view your favorites.');
+      }
+    },
+
+async openSymbolsModal() {
+      this.isModalOpen = true; // Set the "Stock Symbols" modal to open
+      this.stockSymbols = []; // Clear any existing data
+
+      const user = auth.currentUser;
+
+      if (user) {
+        try {
+          // Fetch user data from Firebase
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('UID', '==', user.uid));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            this.watchList = userDoc.data().watchList || []; // Load existing watchlist from Firebase
+
+            // Mock: Replace with actual fetch logic for stock symbols
+            this.stockSymbols = await fetchStockSymbols(); // Fetch stock symbols
+          }
+        } catch (error) {
+          console.error('Error fetching stock symbols or user data:', error);
+        }
+      } else {
+        alert('Please log in to view stock symbols.');
+      }
+    },
+
+    toggleFavorite(symbol) {
+    if (this.watchList.includes(symbol)) {
+      this.watchList = this.watchList.filter((item) => item !== symbol);
+    } else {
+      this.watchList.push(symbol);
+    }
+  },
 
   closeFavoritesModal() {
     this.isFavoritesModalOpen = false;
@@ -540,6 +596,32 @@ iframe {
   z-index: 1000;
 }
 
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.symbol-entry {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.heart-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  margin-right: 10px;
+}
+
 .modal-content {
   background-color: #f9c802;
   padding: 20px;
@@ -610,9 +692,22 @@ button {
   margin-top: 10px;
 }
 
+.heart-button {
+  border: none;
+  background: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.heart-button:hover {
+  transform: scale(1.5);
+  transition: transform 0.25s ease;  
+}
+
 /* Button hover effect */
 button:hover {
-  background-color: #666;
+  background-color: #66666600;
 }
 
 .pattern-recognition-bubble {
