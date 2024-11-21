@@ -1,15 +1,18 @@
 <template>
     <div class="chart-background">
-        <PieChart v-if="chartData && chartData.labels.length" :chartData="chartData" :options="options" />
+        <p v-if="!chartIsReady">Loading Chart...</p>
+        <PieChart :key="chartKey"
+            v-if="chartData && chartData.labels.length === 6 && chartData.datasets[0].data.every(d => d >= 0)"
+            :chartData="chartData" :options="options" ref="chartRef" />
     </div>
 </template>
 
 <script>
 import { Pie } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-import { db } from '@/firebase'; // Import your Firestore database instance
+import { db } from '@/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth'; // Import Firebase Auth to get current user
+import { getAuth } from 'firebase/auth';
 
 // Register Chart.js components
 ChartJS.register(Title, Tooltip, Legend, ArcElement);
@@ -21,6 +24,8 @@ export default {
     },
     data() {
         return {
+            chartIsReady: false,
+            chartKey: 0,
             chartData: {
                 labels: [
                     'Beginner Lessons Completed %',
@@ -45,7 +50,7 @@ export default {
                         position: 'top',
                         display: true,
                         labels: {
-                            color: '#FFFFFF', // Set to white or any other desired color
+                            color: '#FFFFFF', // Make legend labels white
                         },
                     },
                     tooltip: {
@@ -63,74 +68,82 @@ export default {
 
     async created() {
         const auth = getAuth();
-
-        // Use Firebase Auth's listener to detect auth state change
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                // User is authenticated, proceed with fetching data
-                await this.fetchUserProgress(user.uid);
-            } else {
-                // User not authenticated, handle accordingly (e.g., redirect or show a message)
-                console.warn("User not authenticated");
-            }
-        });
-
-        // Override legend settings for pie charts here
         ChartJS.overrides.pie = {
             plugins: {
                 legend: {
                     labels: {
-                        color: '#FFFFFF', // Set legend text color
+                        color: '#FFFFFF', // Make legend labels white
                     },
                 },
             },
         };
-    },
-    methods: {
-        async fetchUserProgress() {
-            const auth = getAuth();
-            const user = auth.currentUser;
-
+        // Listen for auth state changes
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
-                const uid = user.uid;
-                const progressRef = collection(db, 'educationalProgress');
-                const q = query(progressRef, where('uid', '==', uid));
-
-                let beginnerCount = 0;
-                let intermediateCount = 0;
-                let expertCount = 0;
-
-                const querySnapshot = await getDocs(q);
-                querySnapshot.forEach((doc) => {
-                    const lessonId = doc.data().lessonId;
-                    if (lessonId >= 1 && lessonId <= 8) {
-                        beginnerCount++;
-                    } else if (lessonId >= 9 && lessonId <= 16) {
-                        intermediateCount++;
-                    } else if (lessonId >= 17 && lessonId <= 24) {
-                        expertCount++;
-                    }
-                });
-
-                // Calculate completed and remaining percentages
-                const totalLessonsPerCategory = 8;
-                const beginnerPercentage = (beginnerCount / totalLessonsPerCategory) * 100;
-                const intermediatePercentage = (intermediateCount / totalLessonsPerCategory) * 100;
-                const expertPercentage = (expertCount / totalLessonsPerCategory) * 100;
-
-                const beginnerRemaining = 100 - beginnerPercentage;
-                const intermediateRemaining = 100 - intermediatePercentage;
-                const expertRemaining = 100 - expertPercentage;
-
-                // Update chart data with both completed and remaining values
-                this.chartData.datasets[0].data = [
-                    beginnerPercentage, beginnerRemaining,
-                    intermediatePercentage, intermediateRemaining,
-                    expertPercentage, expertRemaining,
-                ];
+                this.chartIsReady = false;
+                await this.fetchUserProgress(user.uid);
+                this.chartIsReady = true;
+            } else {
+                console.warn("User not authenticated");
             }
-        },
+        });
     },
+
+    methods: {
+        async fetchUserProgress(uid) {
+            const progressRef = collection(db, 'educationalProgress');
+            const q = query(progressRef, where('uid', '==', uid));
+
+            let beginnerCount = 0;
+            let intermediateCount = 0;
+            let expertCount = 0;
+
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                const lessonId = doc.data().lessonId;
+                if (lessonId >= 1 && lessonId <= 8) {
+                    beginnerCount++;
+                } else if (lessonId >= 9 && lessonId <= 16) {
+                    intermediateCount++;
+                } else if (lessonId >= 17 && lessonId <= 24) {
+                    expertCount++;
+                }
+            });
+
+            // Calculate completed and remaining percentages
+            const totalLessonsPerCategory = 8;
+            const beginnerPercentage = (beginnerCount / totalLessonsPerCategory) * 100;
+            const intermediatePercentage = (intermediateCount / totalLessonsPerCategory) * 100;
+            const expertPercentage = (expertCount / totalLessonsPerCategory) * 100;
+
+            const beginnerRemaining = 100 - beginnerPercentage;
+            const intermediateRemaining = 100 - intermediatePercentage;
+            const expertRemaining = 100 - expertPercentage;
+
+            // Update chart data
+            this.chartData.datasets[0].data = [
+                beginnerPercentage, beginnerRemaining,
+                intermediatePercentage, intermediateRemaining,
+                expertPercentage, expertRemaining,
+            ];
+        },
+        reloadChart() {
+            this.chartKey += 1;  // Increment the key to force re-render
+        }
+    },
+    mounted() {
+
+    },
+    watch: {
+        chartData(newData) {
+            this.$nextTick(() => {
+                const chart = this.$refs.chartRef.chart; // Correct way to access the chart instance
+                if (chart) {
+                    chart.update(); // Ensure the chart is updated after data changes
+                }
+            });
+        },
+    }
 };
 </script>
 
@@ -140,5 +153,4 @@ export default {
     border-radius: 1rem;
     padding-bottom: 25px;
 }
-
 </style>

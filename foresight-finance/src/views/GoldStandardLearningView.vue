@@ -2,11 +2,11 @@
   <div class="marble-background" v-if="loggedIn">
     <div class="split left">
       <div class="centered">
-        <MultiSeriesPieChart />
+        <MultiSeriesPieChart @error="handleError" />
       </div>
     </div>
     <div class="split right">
-      <div class="accordion-container">
+      <div class="accordion-container" v-if="userExpLevel">
         <!-- Beginner Lessons Accordion -->
         <button class="accordion" :class="{ locked: userExpLevel < 1 }" @click="toggleAccordion($event, 1)">
           Beginner Lessons
@@ -19,6 +19,7 @@
                 <router-link :to="{ name: 'LearningView', params: { lessonID: lesson.ID } }">
                   {{ lesson.title }}
                 </router-link>
+                <span v-if="isQuizPassed(lesson.ID)">✔️</span>
               </p>
             </div>
           </div>
@@ -36,6 +37,7 @@
                 <router-link :to="{ name: 'LearningView', params: { lessonID: lesson.ID } }">
                   {{ lesson.title }}
                 </router-link>
+                <span v-if="isQuizPassed(lesson.ID)">✔️</span>
               </p>
             </div>
           </div>
@@ -52,6 +54,7 @@
                 <router-link :to="{ name: 'LearningView', params: { lessonID: lesson.ID } }">
                   {{ lesson.title }}
                 </router-link>
+                <span v-if="isQuizPassed(lesson.ID)">✔️</span>
               </p>
             </div>
           </div>
@@ -86,10 +89,11 @@ export default {
       beginnerLessons: [],
       intermediateLessons: [],
       expertLessons: [],
-      userExpLevel: 0, // User's experience level
+      userExpLevel: null, // User's experience level
       user: null, // User object
       loading: true, // To handle the loading state
-      loggedIn: true
+      loggedIn: true,
+      userProgression: []
     };
   },
   computed: {
@@ -106,6 +110,7 @@ export default {
   mounted() {
     // Call the method to check user and fetch data
     this.fetchUserAndLessons();
+
   },
   methods: {
     async fetchUserAndLessons() {
@@ -114,7 +119,6 @@ export default {
 
       // Step 1: Check if user is authenticated first
       onAuthStateChanged(auth, async (user) => {
-        console.log(user)
         if (!user) {
           // If the user is not logged in, redirect to the login page
           this.loggedIn = false
@@ -122,13 +126,12 @@ export default {
         }
 
         // Step 2: User is logged in, store user information
-        this.user = user;
-
+        this.user = user
         try {
           // Fetch the user's experience level from Firestore
-          const userQuery = query(collection(db, 'users'), where("UID", "==", user.uid));
+          const userExpCollection = collection(db, 'users')
+          const userQuery = query(userExpCollection, where("UID", "==", user.uid));
           const userQuerySnapshot = await getDocs(userQuery);
-
           // Step 3: Check if the query found any document
           if (!userQuerySnapshot.empty) {
             const userDoc = userQuerySnapshot.docs[0]; // Get the first matching document
@@ -145,6 +148,8 @@ export default {
           this.beginnerLessons = lessons.filter(lesson => lesson.levelNeeded === 1);
           this.intermediateLessons = lessons.filter(lesson => lesson.levelNeeded === 2);
           this.expertLessons = lessons.filter(lesson => lesson.levelNeeded === 3);
+
+          this.fetchUserProgress(this.user.uid)
 
         } catch (error) {
           console.error("Error fetching data:", error);
@@ -168,6 +173,21 @@ export default {
       } else {
         panel.style.maxHeight = panel.scrollHeight + 'px';
       }
+    },
+    async fetchUserProgress(uid) {
+      const progressRef = collection(db, 'educationalProgress');
+      const q = query(progressRef, where('uid', '==', uid));
+
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        this.userProgression.push(doc.data().lessonId)
+      });
+    },
+    isQuizPassed(lessonID) {
+      return this.userProgression.includes(lessonID.toString())
+    },
+    handleError(err) {
+      console.error("Error from MultiSeriesPieChart:", err);
     },
   },
 };
