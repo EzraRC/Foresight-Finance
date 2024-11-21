@@ -167,11 +167,28 @@ export default {
       const button = event.target;
       const panel = button.nextElementSibling;
 
-      button.classList.toggle('active');
+      // Close all other accordions
+      const allButtons = document.querySelectorAll(".accordion");
+      const allPanels = document.querySelectorAll(".panel");
+
+      allButtons.forEach((btn) => {
+        if (btn !== button) {
+          btn.classList.remove("active");
+        }
+      });
+
+      allPanels.forEach((pnl) => {
+        if (pnl !== panel) {
+          pnl.style.maxHeight = null;
+        }
+      });
+
+      // Toggle the clicked accordion
+      button.classList.toggle("active");
       if (panel.style.maxHeight) {
-        panel.style.maxHeight = null;
+        panel.style.maxHeight = null; // Close the panel if already open
       } else {
-        panel.style.maxHeight = panel.scrollHeight + 'px';
+        panel.style.maxHeight = panel.scrollHeight + "px"; // Open the clicked panel
       }
     },
     async fetchUserProgress(uid) {
