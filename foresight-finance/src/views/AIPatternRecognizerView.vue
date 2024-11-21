@@ -83,7 +83,7 @@
       </a>
     </div>
 
-    <button @click="closeFavoritesModal">Close</button>
+    <button class="close-button" @click="closeFavoritesModal">Close</button>
   </div>
 </div>
 
@@ -113,7 +113,7 @@
             </div>
 
             <!-- Close button fixed at the bottom -->
-            <button @click="closeModal">Close</button>
+            <button class="close-button" @click="closeModal">Close</button>
           </div>
         </div>
 
@@ -176,7 +176,7 @@
         - {{ company?.name || 'Unknown Company' }}
       </li>
     </ul>
-    <button @click="closeModal">Close</button>
+    <button class="close-button" @click="closeModal">Close</button>
   </div>
 </div>
 
@@ -648,7 +648,7 @@ iframe {
   border-radius: 5px;
 }
 
-.search-bar button {
+.search-button {
   padding: 10px 20px;
   font-size: 16px;
   background-color: #f9c802;
@@ -820,6 +820,13 @@ button {
   margin-top: 10px;
 }
 
+.close-button{
+  background-color: #000000;
+}
+.close-button:hover {
+  background-color: #474747;
+}
+
 .heart-button {
   border: none;
   background: none;
@@ -835,7 +842,7 @@ button {
 
 /* Button hover effect */
 button:hover {
-  background-color: #66666600;
+  background-color: #474747;
 }
 
 .pattern-recognition-bubble {
