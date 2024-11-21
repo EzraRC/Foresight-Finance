@@ -838,8 +838,9 @@ button {
 }
 
 .heart-button:hover {
-  transform: scale(1.5);
-  transition: transform 0.25s ease;  
+  transform: scale(1.3);
+  transition: transform 0.25s ease;
+  background-color: #ffffff00;
 }
 
 /* Button hover effect */
