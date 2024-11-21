@@ -709,7 +709,7 @@ iframe {
   padding: 10px;
   color: white;
   font-size: 15px;
-  margin-bottom: 100px;
+  margin-bottom: 80px;
 }
 
 /* List styles */
