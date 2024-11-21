@@ -1,5 +1,5 @@
 <template>
-  <div class="marble-background">
+  <div class="marble-background" v-if="loggedIn">
     <div class="split left">
       <div class="centered">
         <MultiSeriesPieChart />
@@ -23,12 +23,12 @@
             </div>
           </div>
         </div>
-
         <!-- Intermediate Lessons Accordion -->
         <button class="accordion" :class="{ locked: userExpLevel < 2 }" @click="toggleAccordion($event, 2)">
           Intermediate Lessons
         </button>
-        <div v-if="userExpLevel < 2" class="tooltip-text">Complete the intermediate lessons to unlock this section!</div>
+        <div v-if="userExpLevel < 2" class="tooltip-text">Complete the intermediate lessons to unlock this section!
+        </div>
         <div class="panel">
           <div v-if="hasIntermediateLessons">
             <div v-for="lesson in intermediateLessons" :key="lesson.id">
@@ -40,7 +40,6 @@
             </div>
           </div>
         </div>
-
         <!-- Expert Lessons Accordion -->
         <button class="accordion" :class="{ locked: userExpLevel < 3 }" @click="toggleAccordion($event, 3)">
           Expert Lessons
@@ -58,6 +57,15 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+  <div v-else class="not-authorized">
+    <div class="not-authorized-container">
+      <h1 class="animated-text">Error 403: Access Denied :(</h1>
+      <p>You don’t have permission to access this page. <br><br>Please log in or create an account with us</p>
+      <router-link to="/LogInSignUp">
+        <button class="login-button">Go to Login</button>
+      </router-link>
     </div>
   </div>
 </template>
@@ -81,6 +89,7 @@ export default {
       userExpLevel: 0, // User's experience level
       user: null, // User object
       loading: true, // To handle the loading state
+      loggedIn: true
     };
   },
   computed: {
@@ -108,7 +117,7 @@ export default {
         console.log(user)
         if (!user) {
           // If the user is not logged in, redirect to the login page
-          router.push({ name: 'Login' });
+          this.loggedIn = false
           return; // Stop execution if not logged in
         }
 
@@ -295,12 +304,84 @@ export default {
 }
 
 
+/* Loading Screen Styles */
+.not-authorized {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-image: url("../assets/educationPageBackground.png");
+  background-color: rgba(24, 50, 67, 0.95);
+  z-index: 3;
+}
+
+.not-authorized-container {
+  background-color: rgba(24, 50, 67, 0.6);
+  padding: 75px;
+  text-align: center;
+}
+
+.not-authorized-container p {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  animation: fadeInSlideUp 1s ease-in-out;
+  color: white;
+  cursor: default;
+}
+
+.animated-text {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  animation: fadeInSlideUp 1s ease-in-out;
+  color: white;
+
+}
+
+
+
+.login-button {
+  background-color: #e3b030a6;
+  border: none;
+  outline: none;
+  color: black !important;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 18px;
+  cursor: pointer;
+  scale: 1.5;
+}
+
+.login-button:hover {
+  scale: 1.55;
+  background: linear-gradient(90deg, rgba(186, 148, 62, 1) 0%, rgba(236, 172, 32, 1) 20%, rgba(186, 148, 62, 1) 39%, rgba(249, 244, 180, 1) 50%, rgba(186, 148, 62, 1) 60%, rgba(236, 172, 32, 1) 80%, rgba(186, 148, 62, 1) 100%);
+  color: black;
+  /* Ensure text stays black on hover */
+  -webkit-text-fill-color: black;
+  /* For WebKit browsers */
+  animation: shine 2s infinite ease-in-out;
+  background-size: 200%;
+  background-position: left;
+}
+
+
+
 
 /* Tooltip styling */
 .tooltip-text {
   display: none;
   position: absolute;
-  left: 0px; /* Position the tooltip to the left of the button */
+  left: 0px;
+  /* Position the tooltip to the left of the button */
   top: 50%;
   transform: translateY(-50%);
   background-color: #333;
@@ -315,7 +396,7 @@ export default {
   transition: opacity 0.3s ease;
 }
 
-.accordion.locked:hover + .tooltip-text {
+.accordion.locked:hover+.tooltip-text {
   display: block;
   opacity: 1;
 }
