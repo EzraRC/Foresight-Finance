@@ -47,18 +47,48 @@
                 </div>
         </div>
 
-        <!-- Modal for displaying the favorites list -->
-        <div v-if="isFavoritesModalOpen" class="modal-overlay" @click.self="closeFavoritesModal">
-          <div class="modal-content">
-            <h2>Your Favorites List</h2>
-            <p>Here you can display the user's saved favorite stocks or patterns.</p>
-            <!-- Example: Display list of favorite stock symbols -->
-            <ul>
-              <li v-for="(favorite, index) in favoritesList" :key="index">{{ favorite }}</li>
-            </ul>
-            <button @click="closeFavoritesModal">Close</button>
-          </div>
-        </div>
+<!-- Modal for displaying the favorites list -->
+<div v-if="isFavoritesModalOpen" class="modal-overlay" @click.self="closeFavoritesModal">
+  <div class="modal-content">
+    <h2>Favorites List</h2>
+    
+    <div v-if="isUserLoggedIn">
+      <ul v-if="watchList.length > 0">
+        <li v-for="(symbol, index) in watchList" :key="index">
+          <!-- Heart button for toggling favorite -->
+          <button
+            class="heart-button"
+            :style="{ color: watchList.includes(symbol) ? 'navy' : 'gray' }"
+            @click="toggleFavorite(symbol)"
+          >
+            ❤
+          </button>
+
+          <!-- Stock symbol hyperlink -->
+          <a 
+            href="javascript:void(0)" 
+            @click="selectSymbol(symbol)"
+          >
+            {{ symbol }}
+          </a>
+        </li>
+      </ul>
+      <div v-else>There are no stocks in your watchlist yet.</div>
+    </div>
+    
+    <div v-else>
+      Oops! It appears that you are not logged in on Foresight Finance.
+      <a :href="loginUrl" style="color: #4ea1f3; text-decoration: underline;">
+        Click here to login to access the favorites list
+      </a>
+    </div>
+
+    <button @click="closeFavoritesModal">Close</button>
+  </div>
+</div>
+
+
+
 
         <!-- Modal for displaying acronyms and their explanations -->
         <div v-if="isAcronymModalOpen" class="modal-overlay" @click.self="closeAcronymModal">
@@ -108,16 +138,26 @@
 
     <!-- Countdown timer for refreshing the graph -->
     <div v-if="!enablePatternRecognition" class="refresh-timer">
-  Refreshing in: {{ countdown }} seconds
+      Refreshing in: {{ countdown }} seconds
     </div>
 
 
     <!-- Modal for displaying stock symbols i got it from https://gretlcycu.wordpress.com/wp-content/uploads/2013/08/quick-ticker-symbol-list.pdf -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-content">
-        <h2>Stock Symbols & Company Names</h2>
-        <ul>
+  <div class="modal-content">
+    <h2>Stock Symbols & Company Names</h2>
+    <ul>
       <li v-for="(company, index) in stockSymbols" :key="index">
+        <!-- Heart button for marking favorites -->
+        <button
+          class="heart-button"
+          :style="{ color: watchList.includes(company.symbol) ? 'navy' : 'gray' }"
+          @click="toggleFavorite(company.symbol)"
+        >
+          ❤
+        </button>
+
+        <!-- Stock symbol and company name -->
         <a 
           href="javascript:void(0)" 
           @click="selectSymbol(company.symbol)"
@@ -127,13 +167,18 @@
         - {{ company?.name || 'Unknown Company' }}
       </li>
     </ul>
-        <button @click="closeModal">Close</button>
-      </div>
-    </div>
+    <button @click="closeModal">Close</button>
+  </div>
+</div>
   </div>
 </template>
 
 <script>
+//imports
+import { getAuth } from 'firebase/auth';
+import { getFirestore, collection, getDocs, query, where, doc, getDoc, setDoc, updateDoc  } from 'firebase/firestore';
+import { auth, db } from '@/firebase';
+
 export default {
   name: 'AIPatternRecognizerView',
   data() {
@@ -146,19 +191,57 @@ export default {
       refreshing: false,
       countdown: 60,
       refreshInterval: null,
-      isModalOpen: false,
-      stockData: '', // Holds stock data from the file
+      stockData: '',
       stockSymbols: [],
-      acronymKey: '', // Holds the content of the acronym key file
-      isAcronymModalOpen: false, // Controls the acronym key modal
-      isFavoritesModalOpen: false, // Controls the favorites modal
+      acronymKey: '',
+      isModalOpen: false,
+      isAcronymModalOpen: false,
+      isFavoritesModalOpen: false,
+      isUserLoggedIn: false,
+      loginUrl: '',
+      user: null,
+      watchList: [],
     };
   },
   created() {
     this.fetchStockSymbols(); // Fetch symbols when component is created
     this.fetchAcronymKey();
+    this.fetchWatchlist();
   },
   methods: {  
+
+    async fetchWatchlist() {
+  const user = auth.currentUser;
+
+  // Check if the user is logged in
+  if (user) {
+    this.isUserLoggedIn = true;
+    try {
+      // Reference to the users collection
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('UID', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+
+      // Check if a matching document was found
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const userData = userDoc.data();
+
+        // Access the watchList array if it exists
+        this.watchList = userData.watchList || [];
+        this.refreshWatchList();
+      } else {
+        console.warn("No user document found for UID:", user.uid);
+        this.watchList = [];
+      }
+    } catch (error) {
+      console.error('Error fetching watchlist:', error);
+    }
+  } else {
+    this.isUserLoggedIn = false;
+    this.loginUrl = "http://localhost:8081/#/LoginSignUp";
+  }
+},
     async fetchAcronymKey() {
   try {
     const response = await fetch('http://127.0.0.1:5000/src/static/acronym_key.txt');
@@ -166,7 +249,7 @@ export default {
 
     const data = await response.text();
 
-    console.log('Raw fetched data:', data); // Debugging output
+    console.log('Raw fetched data success'); // Debugging output
 
     this.acronymList = data
       .split('+') // Split entries by the '+' delimiter
@@ -191,7 +274,7 @@ export default {
       })
       .filter(entry => entry); // Remove null or invalid entries
 
-    console.log('Parsed acronym list:', this.acronymList); // Debugging output
+    console.log('Parsed acronym list success'); // Debugging output
   } catch (error) {
     console.error('Error fetching acronym key:', error);
   }
@@ -202,9 +285,143 @@ export default {
     this.fetchAcronymKey();
   },
 
-  openFavoritesModal() {
-    this.isFavoritesModalOpen = true;
-  },
+async openFavoritesModal() {
+  this.isFavoritesModalOpen = true; // Open the favorites modal
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (user) {
+    try {
+      // Fetch the updated user's watch list from Firestore
+      const userRef = doc(db, 'users', user.uid); // Reference to the current user's document
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        // Fetch the watchList data from Firestore
+        const data = userDoc.data();
+        this.watchList = data.watchList || []; // Update the local state with the latest watchList
+      }
+    } catch (error) {
+      console.error('Error opening favorites modal:', error);
+    }
+  } else {
+    console.error('Please log in to view your favorites.');
+  }
+},
+
+
+async refreshWatchList() {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user) {
+        try {
+            // Query the users collection to find the document with the matching UID field
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('UID', '==', user.uid));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const userDoc = querySnapshot.docs[0];
+                this.watchList = userDoc.data().watchList || [];
+                console.log("Favorites list refreshed:", this.watchList);
+            } else {
+                console.log("No favorites found for the user.");
+                this.watchList = [];
+            }
+        } catch (error) {
+            console.error('Error refreshing favorites list:', error);
+        }
+    } else {
+        console.error('Please log in to refresh your favorites.');
+    }
+},
+
+async openSymbolsModal() {
+      this.isModalOpen = true; // Set the "Stock Symbols" modal to open
+      this.stockSymbols = []; // Clear any existing data
+
+      const user = auth.currentUser;
+
+      if (user) {
+        try {
+          // Fetch user data from Firebase
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('UID', '==', user.uid));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            this.watchList = userDoc.data().watchList || []; // Load existing watchlist from Firebase
+
+            // Mock: Replace with actual fetch logic for stock symbols
+            this.stockSymbols = await fetchStockSymbols(); // Fetch stock symbols
+          }
+        } catch (error) {
+          console.error('Error fetching stock symbols or user data:', error);
+        }
+      } else {
+        alert('Please log in to view stock symbols.');
+      }
+    },
+
+    async toggleFavorite(symbol) {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.error("No user is logged in.");
+        return;
+    }
+
+    const uid = user.uid;
+
+    try {
+        // Query the users collection to find the document with the matching UID field
+        const usersQuery = query(collection(db, "users"), where("UID", "==", uid));
+        const querySnapshot = await getDocs(usersQuery);
+
+        if (!querySnapshot.empty) {
+            // Assume there's only one document per UID
+            const userDoc = querySnapshot.docs[0];
+            const userRef = doc(db, "users", userDoc.id); // Use the document ID for updates
+            const data = userDoc.data();
+            const watchList = data.watchList || [];
+
+            if (watchList.includes(symbol)) {
+                // Remove the symbol from the watchlist
+                const updatedWatchList = watchList.filter(item => item !== symbol);
+                await updateDoc(userRef, {
+                    watchList: updatedWatchList
+                });
+                console.log(`Removed ${symbol} from watchlist.`);
+            } else {
+                // Add the symbol to the watchlist
+                const updatedWatchList = [...watchList, symbol];
+                await updateDoc(userRef, {
+                    watchList: updatedWatchList
+                });
+                console.log(`Added ${symbol} to watchlist.`);
+            }
+            // Refresh the watch list after the update
+            await this.refreshWatchList();
+        } else {
+            // No document found for the user, create a new one
+            const newUserRef = doc(collection(db, "users"));
+            await setDoc(newUserRef, {
+                UID: uid,
+                watchList: [symbol]
+            });
+            console.log(`Created new user document and added ${symbol} to watchlist.`);
+            // Refresh the watch list after the update
+            await this.refreshWatchList();
+        }
+    } catch (error) {
+        console.error("Error updating watchlist:", error);
+    }
+},
+
   closeFavoritesModal() {
     this.isFavoritesModalOpen = false;
   },
@@ -363,7 +580,12 @@ togglePatternRecognition() {
         borderRadius: '10px',
         position: 'relative',
       };
-    }
+    },
+    isUserLoggedIn() {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      return user !== null;  // Returns true if the user is logged in, else false
+    },
   }
 };
 </script>
@@ -478,6 +700,32 @@ iframe {
   z-index: 1000;
 }
 
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.symbol-entry {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.heart-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  margin-right: 10px;
+}
+
 .modal-content {
   background-color: #f9c802;
   padding: 20px;
@@ -548,9 +796,22 @@ button {
   margin-top: 10px;
 }
 
+.heart-button {
+  border: none;
+  background: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.heart-button:hover {
+  transform: scale(1.5);
+  transition: transform 0.25s ease;  
+}
+
 /* Button hover effect */
 button:hover {
-  background-color: #666;
+  background-color: #66666600;
 }
 
 .pattern-recognition-bubble {
