@@ -52,10 +52,10 @@
           <div class="modal-content">
             <h2>Favorites List</h2>
             <div v-if="isUserLoggedIn">
-              <ul v-if="favoritesList.length > 0">
-                <li v-for="(favorite, index) in favoritesList" :key="index">{{ favorite }}</li>
+              <ul v-if="watchList.length > 0">
+                <li v-for="(favorite, index) in watchList" :key="index">{{ favorite }}</li>
               </ul>
-              <div v-else>No stocks in your watchlist yet.</div>
+              <div v-else>There are no stocks in your watchlist yet.</div>
             </div>
             <div v-else>
               Oops! It appears that you are not logged in on Foresight Finance.
@@ -176,10 +176,10 @@ export default {
       isModalOpen: false,
       isAcronymModalOpen: false,
       isFavoritesModalOpen: false,
-      watchList: [],
       isUserLoggedIn: false,
       loginUrl: '',
       user: null,
+      watchList: [],
     };
   },
   created() {
@@ -207,10 +207,11 @@ export default {
         const userData = userDoc.data();
 
         // Access the watchList array if it exists
-        this.favoritesList = userData.watchList || [];
+        this.watchList = userData.watchList || [];
+        this.refreshWatchList();
       } else {
         console.warn("No user document found for UID:", user.uid);
-        this.favoritesList = [];
+        this.watchList = [];
       }
     } catch (error) {
       console.error('Error fetching watchlist:', error);
@@ -227,7 +228,7 @@ export default {
 
     const data = await response.text();
 
-    console.log('Raw fetched data:', data); // Debugging output
+    console.log('Raw fetched data success'); // Debugging output
 
     this.acronymList = data
       .split('+') // Split entries by the '+' delimiter
@@ -252,7 +253,7 @@ export default {
       })
       .filter(entry => entry); // Remove null or invalid entries
 
-    console.log('Parsed acronym list:', this.acronymList); // Debugging output
+    console.log('Parsed acronym list success'); // Debugging output
   } catch (error) {
     console.error('Error fetching acronym key:', error);
   }
@@ -263,34 +264,31 @@ export default {
     this.fetchAcronymKey();
   },
 
-  async openFavoritesModal() {
-    this.isFavoritesModalOpen = true; // Set the "Favorites List" modal to open
+async openFavoritesModal() {
+  this.isFavoritesModalOpen = true; // Open the favorites modal
 
-    const auth = getAuth();
-    const user = auth.currentUser;
+  const auth = getAuth();
+  const user = auth.currentUser;
 
-    if (user) {
-        try {
-            // Query the users collection to find the document with the matching UID field
-            const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('UID', '==', user.uid));
-            const querySnapshot = await getDocs(q);
+  if (user) {
+    try {
+      // Fetch the updated user's watch list from Firestore
+      const userRef = doc(db, 'users', user.uid); // Reference to the current user's document
+      const userDoc = await getDoc(userRef);
 
-            if (!querySnapshot.empty) {
-                const userDoc = querySnapshot.docs[0];
-                this.watchList = userDoc.data().watchList || []; // Populate watch list
-                console.log("Favorites list loaded:", this.watchList);
-            } else {
-                console.log("No favorites found for the user.");
-                this.watchList = []; // Reset the watch list if no document is found
-            }
-        } catch (error) {
-            console.error('Error opening favorites modal:', error);
-        }
-    } else {
-        console.error('Please log in to view your favorites.');
+      if (userDoc.exists()) {
+        // Fetch the watchList data from Firestore
+        const data = userDoc.data();
+        this.watchList = data.watchList || []; // Update the local state with the latest watchList
+      }
+    } catch (error) {
+      console.error('Error opening favorites modal:', error);
     }
+  } else {
+    console.error('Please log in to view your favorites.');
+  }
 },
+
 
 async refreshWatchList() {
     const auth = getAuth();
@@ -561,7 +559,12 @@ togglePatternRecognition() {
         borderRadius: '10px',
         position: 'relative',
       };
-    }
+    },
+    isUserLoggedIn() {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      return user !== null;  // Returns true if the user is logged in, else false
+    },
   }
 };
 </script>
