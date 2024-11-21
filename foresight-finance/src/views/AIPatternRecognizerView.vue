@@ -142,12 +142,21 @@
     </div>
 
 
-    <!-- Modal for displaying stock symbols i got it from https://gretlcycu.wordpress.com/wp-content/uploads/2013/08/quick-ticker-symbol-list.pdf -->
-    <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
+<!-- Modal for displaying stock symbols -->
+<div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
   <div class="modal-content">
     <h2>Stock Symbols & Company Names</h2>
+
+    <!-- Search Input -->
+    <input 
+      type="text" 
+      v-model="searchQuery" 
+      placeholder="Search for a stock symbol or company name..." 
+      class="search-input"
+    />
+
     <ul>
-      <li v-for="(company, index) in stockSymbols" :key="index">
+      <li v-for="(company, index) in filteredStockSymbols" :key="index">
         <!-- Heart button for marking favorites -->
         <button
           class="heart-button"
@@ -170,6 +179,7 @@
     <button @click="closeModal">Close</button>
   </div>
 </div>
+
   </div>
 </template>
 
@@ -194,6 +204,7 @@ export default {
       stockData: '',
       stockSymbols: [],
       acronymKey: '',
+      searchQuery: "",
       isModalOpen: false,
       isAcronymModalOpen: false,
       isFavoritesModalOpen: false,
@@ -586,6 +597,19 @@ togglePatternRecognition() {
       const user = auth.currentUser;
       return user !== null;  // Returns true if the user is logged in, else false
     },
+    filteredStockSymbols() {
+    if (!this.searchQuery.trim()) {
+      return this.stockSymbols;
+    }
+
+    // Simple fuzzy search logic (improve with Fuse.js if needed)
+    const lowerQuery = this.searchQuery.toLowerCase();
+    return this.stockSymbols.filter(
+      company =>
+        company.symbol.toLowerCase().includes(lowerQuery) ||
+        company.name.toLowerCase().includes(lowerQuery)
+    );
+  }
   }
 };
 </script>
@@ -730,7 +754,7 @@ iframe {
   background-color: #f9c802;
   padding: 20px;
   border-radius: 8px;
-  width: 600px;
+  width: 580px;
   text-align: center;
   margin: auto;   /* Center modal */
 }
