@@ -32,8 +32,7 @@ def generate_chart():
     dates.index = np.linspace(1, len(dates), len(dates))
 
     print("find max min")
-    smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
-    max_candidates, min_candidates, max_min, max_min_types = pr.find_max_min(prices, two = 2) #FInd max and min of prices to smooth it
+    max_min, max_min_types = pr.find_max_miny(prices) #FInd max and min of prices to smooth it
     
     print("patterns")
     patterns = pr.find_patterns(max_min, max_min_types) #Find Patterns
@@ -129,6 +128,7 @@ def generate_chart():
                 )
 
         fig.show()
+        print("done")
 
     except Exception as e:
         print(f"Error creating chart: {e}")  # Log any errors during chart creation
@@ -150,5 +150,4 @@ def filter_trading_hours(df):
     
     return df
 
-print("Got to the end")
 generate_chart()

@@ -104,27 +104,54 @@ def find_max_min(prices):
     return smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, \
            price_max_indices, price_min_indices, max_min, max_min_types
 
-def find_max_min(prices,two):
-    two = two * 2
-    # Use Gaussian smoothing instead of KernelReg
-    smooth_prices = pd.Series(data=gaussian_filter1d(prices.values, sigma=2), index=prices.index)
+def find_max_miny(prices):
+    # Smooth the price data using Kernel Regression
+    subsample_indices = prices.index[::5]
+    subsample_prices = prices.loc[subsample_indices]
 
-    # Find local max/min using numpy functions directly for speed
+    # Smooth the subsampled data using Kernel Regression
+    model = KernelReg(subsample_prices.values, subsample_prices.index.values, var_type='c', bw="cv_ls")
+    smoothed_subsample = model.fit([subsample_prices.index.values])[0]
+
+    # Interpolate back to the original index
+    smooth_prices = pd.Series(
+        data=np.interp(prices.index, subsample_indices, smoothed_subsample),
+        index=prices.index
+    )
+    # Identify local maxima and minima
     smooth_prices_max_indices = argrelextrema(smooth_prices.values, np.greater, order=1)[0]
     smooth_prices_min_indices = argrelextrema(smooth_prices.values, np.less, order=1)[0]
 
-    # Use numpy to efficiently gather max/min indices in the specified range
-    max_candidates = np.array([prices.iloc[i-2:i+2].idxmax() for i in smooth_prices_max_indices if 1 < i < len(prices)-1])
-    min_candidates = np.array([prices.iloc[i-2:i+2].idxmin() for i in smooth_prices_min_indices if 1 < i < len(prices)-1])
+    # Combined lists for maxima, minima, and their types
+    price_indices = []
+    max_min_types = []
 
-    # Filter duplicates by converting to DataFrame and dropping duplicates
-    max_min = pd.Series(prices.loc[np.concatenate([max_candidates, min_candidates])]).sort_index().drop_duplicates()
-    
-    # Label max and min types
-    max_min_types = pd.Series(data=['max'] * len(max_candidates) + ['min'] * len(min_candidates), 
-                              index=np.concatenate([max_candidates, min_candidates])).sort_index()
+    # Process maxima
+    for i in smooth_prices_max_indices:
+        if 1 < i < len(prices) - 1:
+            max_idx = prices.iloc[i - 2:i + 2].idxmax()
+            price_indices.append(max_idx)
+            max_min_types.append('max')
 
-    return smooth_prices, smooth_prices_max_indices, smooth_prices_min_indices, max_candidates, min_candidates, max_min, max_min_types
+    # Process minima
+    for i in smooth_prices_min_indices:
+        if 1 < i < len(prices) - 1:
+            min_idx = prices.iloc[i - 2:i + 2].idxmin()
+            price_indices.append(min_idx)
+            max_min_types.append('min')
+
+    # Create max_min series with combined max and min indices
+    max_min = prices.loc[price_indices]
+    max_min = max_min[~max_min.index.duplicated()].sort_index()  # Remove duplicates and sort
+
+    # Create max_min_types series
+    max_min_types = pd.Series(data=max_min_types, index=price_indices).sort_index()
+
+    return (
+        max_min,
+        max_min_types
+    )
+
 
 
 
