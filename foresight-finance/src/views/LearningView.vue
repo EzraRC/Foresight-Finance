@@ -52,7 +52,7 @@ import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 
 export default {
-    name: 'LearningView',
+    name: "LearningView",
     data() {
         return {
             isAuthorized: false,
@@ -61,9 +61,9 @@ export default {
             lessonTitle: "",
             videoId: "",
             player: null,
-            validTime: [], // Tracks the valid playback range
-            showTooltip: false, // Tooltip visibility for seeking attempts
-            isPaused: false, // Track the pause state
+            validTime: [],
+            showTooltip: false,
+            isPaused: false,
         };
     },
     methods: {
@@ -71,50 +71,58 @@ export default {
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     this.isAuthorized = true;
-                    try {
-                        const lessonId = this.$route.params.lessonID || "1";
-                        const lessonDocRef = doc(db, "lessons", lessonId);
-                        const lessonDoc = await getDoc(lessonDocRef);
-
-                        if (lessonDoc.exists()) {
-                            const lessonData = lessonDoc.data();
-                            this.lessonID = lessonData.ID;
-                            this.lessonTitle = lessonData.title;
-                            this.videoId = this.extractVideoId(lessonData.URL);
-                            this.loadYouTubeAPI();
-                        } else {
-                            console.error("No such document!");
-                        }
-                    } catch (error) {
-                        console.error("Error fetching lesson data:", error);
-                    }
+                    await this.loadLessonData(); // Load lesson-specific data
                 } else {
                     this.isAuthorized = false;
                 }
                 this.isLoading = false;
             });
         },
+        async loadLessonData() {
+            try {
+                const lessonId = this.$route.params.lessonID || "1";
+                const lessonDocRef = doc(db, "lessons", lessonId);
+                const lessonDoc = await getDoc(lessonDocRef);
+
+                if (lessonDoc.exists()) {
+                    const lessonData = lessonDoc.data();
+                    this.lessonID = lessonData.ID;
+                    this.lessonTitle = lessonData.title;
+                    this.videoId = this.extractVideoId(lessonData.URL);
+                    this.initializeYouTubeAPI();
+                } else {
+                    console.error("No such document!");
+                }
+            } catch (error) {
+                console.error("Error fetching lesson data:", error);
+            }
+        },
         extractVideoId(url) {
             const regExp = /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]+)/;
             const match = url.match(regExp);
             return match && match[1] ? match[1] : "";
         },
-        loadYouTubeAPI() {
-            const script = document.createElement("script");
-            script.src = "https://www.youtube.com/iframe_api";
-            document.body.appendChild(script);
-            window.onYouTubeIframeAPIReady = this.initializeYouTubePlayer;
+        initializeYouTubeAPI() {
+            if (!window.YT) {
+                const script = document.createElement("script");
+                script.src = "https://www.youtube.com/iframe_api";
+                document.body.appendChild(script);
+                window.onYouTubeIframeAPIReady = this.initializeYouTubePlayer.bind(this);
+            } else {
+                this.initializeYouTubePlayer(); // Initialize immediately if API is already loaded
+            }
         },
         initializeYouTubePlayer() {
+            if (this.player) this.player.destroy(); // Destroy previous instance if reinitializing
             this.player = new YT.Player("youtube-player", {
                 height: "390",
                 width: "640",
                 videoId: this.videoId,
                 playerVars: {
                     modestbranding: 1,
-                    controls: 0, // Disable controls (we'll add custom controls)
+                    controls: 0,
                     disablekb: 1,
-                    enablejsapi: 1, // Ensure API is enabled for further controls
+                    enablejsapi: 1,
                 },
                 events: {
                     onReady: this.onPlayerReady,
@@ -156,12 +164,25 @@ export default {
             }, 1000);
         },
     },
-
+    beforeRouteEnter(to, from, next) {
+        next((vm) => {
+            vm.checkAuthAndLoadData();
+        });
+    },
+    beforeRouteUpdate(to, from, next) {
+        this.isLoading = true;
+        this.loadLessonData().then(() => {
+            this.isLoading = false;
+            next();
+        });
+    },
     mounted() {
         this.checkAuthAndLoadData();
     },
 };
+
 </script>
+
 
 
 <style>
