@@ -148,11 +148,13 @@
     <h2>Stock Symbols & Company Names</h2>
 
     <!-- Search Input -->
+     
     <input 
       type="text" 
       v-model="searchQuery" 
-      placeholder="Search for a stock symbol or company name..." 
+      placeholder="                     Enter a stock symbol or company name" 
       class="search-input"
+      style="width: 400px;" 
     />
 
     <ul>
