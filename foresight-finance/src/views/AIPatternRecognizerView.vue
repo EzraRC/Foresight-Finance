@@ -47,25 +47,46 @@
                 </div>
         </div>
 
-        <!-- Modal for displaying the favorites list -->
-        <div v-if="isFavoritesModalOpen" class="modal-overlay" @click.self="closeFavoritesModal">
-          <div class="modal-content">
-            <h2>Favorites List</h2>
-            <div v-if="isUserLoggedIn">
-              <ul v-if="watchList.length > 0">
-                <li v-for="(favorite, index) in watchList" :key="index">{{ favorite }}</li>
-              </ul>
-              <div v-else>There are no stocks in your watchlist yet.</div>
-            </div>
-            <div v-else>
-              Oops! It appears that you are not logged in on Foresight Finance.
-              <a :href="loginUrl" style="color: #4ea1f3; text-decoration: underline;">
-                Click here to login to access the favorites list
-              </a>
-            </div>
-            <button @click="closeFavoritesModal">Close</button>
-          </div>
-        </div>
+<!-- Modal for displaying the favorites list -->
+<div v-if="isFavoritesModalOpen" class="modal-overlay" @click.self="closeFavoritesModal">
+  <div class="modal-content">
+    <h2>Favorites List</h2>
+    
+    <div v-if="isUserLoggedIn">
+      <ul v-if="watchList.length > 0">
+        <li v-for="(symbol, index) in watchList" :key="index">
+          <!-- Heart button for toggling favorite -->
+          <button
+            class="heart-button"
+            :style="{ color: watchList.includes(symbol) ? 'navy' : 'gray' }"
+            @click="toggleFavorite(symbol)"
+          >
+            ❤
+          </button>
+
+          <!-- Stock symbol hyperlink -->
+          <a 
+            href="javascript:void(0)" 
+            @click="selectSymbol(symbol)"
+          >
+            {{ symbol }}
+          </a>
+        </li>
+      </ul>
+      <div v-else>There are no stocks in your watchlist yet.</div>
+    </div>
+    
+    <div v-else>
+      Oops! It appears that you are not logged in on Foresight Finance.
+      <a :href="loginUrl" style="color: #4ea1f3; text-decoration: underline;">
+        Click here to login to access the favorites list
+      </a>
+    </div>
+
+    <button @click="closeFavoritesModal">Close</button>
+  </div>
+</div>
+
 
 
 
