@@ -36,10 +36,13 @@
         <a href="javascript:void(0)" @click="openFavoritesModal" class="trending-link" style="margin-right: 20px;">
           Click here for your favorites list!
         </a>
-
-
+    
         <!-- Toggle checkbox for pattern recognition -->
         <div class="pattern-recognition-bubble">
+          <!-- Countdown timer for refreshing the graph -->
+          <div v-if="!enablePatternRecognition" class="refresh-timer">
+            Refreshing in: {{ countdown }} seconds
+          </div>
           <label for="toggle" class="pattern-label">Enable pattern recognition</label>
           <div class="toggle-wrapper">
                   <input type="checkbox" id="toggle" v-model="enablePatternRecognition" @change="togglePatternRecognition"/>
@@ -134,11 +137,6 @@
           <p style="color: white;">Sector: <span>{{ sector }}</span></p>
       </div>
       </div>
-    </div>
-
-    <!-- Countdown timer for refreshing the graph -->
-    <div v-if="!enablePatternRecognition" class="refresh-timer">
-      Refreshing in: {{ countdown }} seconds
     </div>
 
 
@@ -658,6 +656,7 @@ iframe {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
+  margin-bottom: 10px;
 
 }
 
@@ -702,14 +701,14 @@ iframe {
 
 .refresh-timer {
   position: absolute;
-  height: 55px;
+  height: 35px;
   bottom: 20px;
   right: 20px;
   background-color: rgba(0, 0, 0, 0.5);
   padding: 10px;
   color: white;
   font-size: 15px;
-  margin-bottom: 80px;
+  margin-bottom: 130px;
 }
 
 /* List styles */
