@@ -36,7 +36,7 @@ npm install
 ## Access the Platform
 
 ### Navigate to the startup script and run it:
-1. Visit the [startup.bat](https://github.com/EzraRC/Foresight-Finance/blob/web/foresight-finance/src/scripts/startup.bat).
+1. Navigate to the [startup.bat](https://github.com/EzraRC/Foresight-Finance/blob/web/foresight-finance/src/scripts/startup.bat) file.
 2. Run the `startup.bat` file.
 
 ### After running the batch file and all consoles have loaded:
