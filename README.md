@@ -44,6 +44,9 @@ npm install
 
 **OR**  
 - On the terminal with `foresight-finance@0.1.0 serve`, hold `Ctrl` and left-click the provided link to access the site.
+<p float="left">
+ <img src="https://github.com/EzraRC/Foresight-Finance/blob/main/Images/console%20window.jpg" alt="Canva Poster" width="500"/>
+</p>
 
 ---
 
